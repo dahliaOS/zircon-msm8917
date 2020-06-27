@@ -1,0 +1,66 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fs-test-utils") {
+  sdk = "source"
+  sdk_headers = [
+    "fs-test-utils/fixture.h",
+    "fs-test-utils/perftest.h",
+    "fs-test-utils/unittest.h",
+  ]
+  testonly = true
+  sources = [
+    "fixture.cc",
+    "perftest.cc",
+  ]
+  public_deps = [
+    # <fs-test-utils/fixture.h> has #include <ramdevice-client/ramdisk.h>.
+    "//zircon/system/ulib/ramdevice-client",
+
+    # <fs-test-utils/blobfs/bloblist.h> has #include <lib/zircon-internal/thread_annotations.h>.
+    "//zircon/public/lib/zircon-internal",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.device:fuchsia.device_c",
+    "//sdk/fidl/fuchsia.device:fuchsia.device_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/devmgr-integration-test",
+    "//zircon/system/ulib/devmgr-launcher",
+    "//zircon/system/ulib/digest",
+    "//zircon/system/ulib/fdio-caller",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/fs-management",
+    "//zircon/system/ulib/fvm",
+    "//zircon/system/ulib/fzl",
+    "//zircon/system/ulib/gpt",
+    "//zircon/system/ulib/memfs",
+    "//zircon/system/ulib/memfs:memfs-cpp",
+    "//zircon/system/ulib/perftest",
+    "//zircon/system/ulib/ramdevice-client",
+    "//zircon/system/ulib/trace",
+    "//zircon/system/ulib/trace-engine",
+    "//zircon/system/ulib/unittest",
+  ]
+}

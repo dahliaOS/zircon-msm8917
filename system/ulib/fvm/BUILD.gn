@@ -1,0 +1,65 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fvm") {
+  sdk = "source"
+  sdk_headers = [
+    "fvm/sparse-reader.h",
+    "fvm/client.h",
+    "fvm/format.h",
+    "fvm/fvm-sparse.h",
+    "fvm/fvm-check.h",
+  ]
+  host = true
+  sources = [
+    "format.cc",
+    "fvm-check.cc",
+    "fvm.cc",
+    "sparse-reader.cc",
+  ]
+  deps = [
+    "//third_party/boringssl",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/lz4",
+    "//zircon/system/ulib/digest",
+  ]
+  public_deps = [
+    # <fvm/fvm.h> has #include <digest/digest.h>.
+    "//zircon/system/ulib/digest",
+
+    # <fvm/fvm.h> has #include <gpt/gpt.h>.
+    "//zircon/system/ulib/gpt",
+
+    # <fvm/sparse-reader.h> has #include <lz4/lz4frame.h>.
+    "//zircon/public/lib/lz4",
+  ]
+  if (is_fuchsia) {
+    sources += [ "client.cc" ]
+
+    deps += [
+      "//sdk/fidl/fuchsia.hardware.block.volume:fuchsia.hardware.block.volume_c",
+      "//zircon/public/lib/sync",
+      "//zircon/public/lib/zx",
+      "//zircon/system/ulib/block-client",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/gpt",
+    ]
+  } else {
+    # fvm-check.cpp has #include <zircon/status.h> even when built for host.
+    public_deps += [ "//zircon/public/lib/zircon-headers" ]
+  }
+}

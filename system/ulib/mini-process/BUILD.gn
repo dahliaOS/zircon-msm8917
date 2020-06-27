@@ -1,0 +1,69 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("mini-process") {
+  sdk = "shared"
+  sdk_headers = [ "mini-process/mini-process.h" ]
+  testonly = true
+  shared = true
+  sources = [ "mini-process.c" ]
+  deps = [
+    ":subprocess",
+    "//zircon/public/lib/elf-psabi",
+    "//zircon/public/lib/elfload",
+  ]
+}
+
+# This code goes into the mini-process where it doesn't have any runtime
+# environment, so it must be compiled specially.
+if (toolchain_variant.instrumented) {
+  # Instrumented variants will just never work for this code.  So
+  # redirect to the default uninstrumented variant to compile this file.
+  group("subprocess") {
+    public_deps = [ ":subprocess(${toolchain_variant.base})" ]
+  }
+} else {
+  source_set("subprocess") {
+    visibility = [ ":*" ]
+
+    # TODO(44278): Revert to true when converting this file to proper GN build idioms.
+    testonly = false
+    sources = [ "subprocess.c" ]
+    deps = [ "//zircon/system/ulib/backtrace-request" ]
+
+    configs += [
+      # No real sanitizers should be enabled in this variant anyway.
+      # But this also disables SafeStack, which is on by default.
+      "//build/config:no_sanitizers",
+
+      # This defeats optimizations that break the assumptions.
+      ":subprocess.config",
+    ]
+  }
+
+  config("subprocess.config") {
+    visibility = [ ":subprocess" ]
+
+    # Always compile with some optimization so that always_inline functions
+    # actually get inlined (which they don't at -O0).  Less optimization than
+    # the default should not be a problem for this code and might actually be
+    # helpful because of its special constraints (see subprocess.c).
+    cflags = [ "-O1" ]
+
+    # Needed to pick up the dependency on mini_process.h.
+    include_dirs = [ "include" ]
+  }
+}

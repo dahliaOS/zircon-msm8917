@@ -1,0 +1,45 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fs-pty") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/fs-pty/tty-connection-internal.h",
+    "lib/fs-pty/service.h",
+  ]
+  static = true
+
+  sources = [
+    "include/lib/fs-pty/service.h",
+    "include/lib/fs-pty/tty-connection-internal.h",
+    "service.cc",
+  ]
+  include_dirs = [ "include" ]
+  public_deps = [
+    "//sdk/fidl/fuchsia.hardware.pty:fuchsia.hardware.pty_llcpp",
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/fs",
+  ]
+
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+    "//zircon/system/ulib/fs",
+  ]
+}

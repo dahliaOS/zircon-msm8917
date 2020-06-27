@@ -1,0 +1,47 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("launchpad") {
+  sdk = "shared"
+  sdk_headers = [
+    "launchpad/vmo.h",
+    "launchpad/launchpad.h",
+  ]
+  shared = true
+  sources = [
+    "elf.c",
+    "fdio.c",
+    "launchpad.c",
+    "vmo.cc",
+  ]
+  defines = [ "_ALL_SOURCE" ]
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/elf-psabi",
+    "//zircon/public/lib/elfload",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/ldmsg",
+    "//zircon/public/lib/zircon-internal",
+  ]
+  visibility = [
+    # Do not add anymore targets to this list.
+    # Instead of launchpad, use fdio_spawn or fuchsia.process.Launcher.
+    ":*",
+    "test:*",
+    "//src/bringup/bin/bootsvc:*",
+  ]
+}

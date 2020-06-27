@@ -1,0 +1,54 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("unittest") {
+  sdk = "shared"
+  sdk_headers = [ "unittest/unittest.h" ]
+  testonly = true
+  host = true
+  shared = true
+  sources = [
+    "all-tests.cc",
+    "unittest-main.cc",
+    "unittest.cc",
+    "watchdog.cc",
+  ]
+  deps = [ "//zircon/public/lib/pretty" ]
+  if (current_os == "linux") {
+    libs = [ "pthread" ]
+  }
+  if (is_fuchsia) {
+    deps += [ "//zircon/public/lib/zx" ]
+  }
+}
+
+# This static version is used for host binaries in the GN build.
+zx_library("unittest-static") {
+  sdk = "static"
+  sdk_headers = [ "unittest/unittest.h" ]
+  testonly = true
+  host = true
+  sources = [
+    "all-tests.cc",
+    "unittest-main.cc",
+    "unittest.cc",
+    "watchdog.cc",
+  ]
+  deps = [ "//zircon/public/lib/pretty" ]
+  if (current_os == "linux") {
+    libs = [ "pthread" ]
+  }
+}

@@ -1,0 +1,72 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+import("//build/fuzzing/fuzzer.gni")
+group("test") {
+  testonly = true
+  deps = [
+    ":hmac-fuzzer",
+    ":zircon-crypto",
+  ]
+}
+
+test("zircon-crypto") {
+  output_name = "zircon-crypto-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [
+    "aead.cc",
+    "bytes.cc",
+    "cipher.cc",
+    "hkdf.cc",
+    "hmac.cc",
+    "secret.cc",
+    "utils.cc",
+  ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/zircon-crypto",
+  ]
+}
+
+fuzzer("hmac-fuzzer") {
+  sources = [ "hmac-fuzzer.cc" ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/zircon-crypto",
+  ]
+}
+
+unittest_package("zircon-crypto-package") {
+  package_name = "zircon-crypto"
+  deps = [ ":zircon-crypto" ]
+
+  tests = [
+    {
+      name = "zircon-crypto-test"
+    },
+  ]
+}

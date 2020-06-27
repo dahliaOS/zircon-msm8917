@@ -1,0 +1,135 @@
+# Copyright 2020 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("$zx/kernel/phys/phys_executable.gni")
+import("$zx/kernel/phys/qemu.gni")
+import("$zx/public/gn/test/zbi_test.gni")
+
+assert(toolchain.environment == "kernel.phys" ||
+       toolchain.environment_label == qemu_environment)
+
+# This provides a PhysMain function appropriate for zbi_test() targets.
+source_set("qemu-test-main") {
+  testonly = true
+  sources = [ "qemu-test-main.cc" ]
+  defines = [ "ZBI_TEST_SUCCESS_STRING=\"$zbi_test_success_string\"" ]
+  deps = [
+    "$zx/kernel/lib/arch",
+    "$zx/kernel/lib/libc",
+    "$zx/system/ulib/uart",
+  ]
+  public_deps = [ ":test-main" ]
+}
+
+source_set("test-main") {
+  testonly = true
+  sources = [ "test-main.h" ]
+  public_deps = [
+    "$zx/kernel/lib/arch:headers",
+    "..:main",
+  ]
+}
+
+# Build a test that runs directly as a QEMU kernel.  This is wired up as a
+# zbi_test() for infrastructure purposes though there is nothing in the ZBI.
+template("phys_qemu_test") {
+  main_target = target_name
+  executable_target = "_qemu_phys_test.$target_name.executable"
+  zbi_target = "_qemu_phys_test.$target_name.zbi_test"
+
+  phys_executable(executable_target) {
+    testonly = true
+    visibility = [ ":*" ]
+    deps = []
+    forward_variables_from(invoker,
+                           "*",
+                           [
+                             "linker_script",
+                             "output_dir",
+                             "output_extension",
+                             "output_name",
+                             "tags",
+                             "testonly",
+                           ])
+    linker_script = "../phys.ld"
+    deps += qemu_deps + [ ":qemu-test-main" ]
+  }
+
+  zbi_test(zbi_target) {
+    visibility = [ ":*" ]
+
+    # The ZBI is empty other than the boilerplate cmdline, and does not
+    # contain a ZBI-bootable kernel.
+    args = []
+    cpu = ""
+    deps = []
+    tags = [ "incomplete" ]
+    if (defined(invoker.tags)) {
+      tags += invoker.tags
+    }
+
+    # The special kernel is all that really matters for this test.
+    qemu_kernel = ":$executable_target"
+
+    # Set a short timeout since the tests don't necessarily shut down QEMU
+    # after printing the success string.
+    timeout = 30  # seconds
+  }
+
+  # The "null redirect" is needed to perform variant selection consistent
+  # with what the phys_executable will do.  That way the $executable_target
+  # label is in the right toolchain to be found in images.json.
+  environment_redirect(main_target) {
+    testonly = true
+    forward_variables_from(invoker, [ "visibility" ])
+    environment_label = qemu_environment
+    deps = [ ":$zbi_target" ]
+  }
+}
+
+phys_qemu_test("hello-world-test") {
+  sources = [ "hello-world-test.cc" ]
+  deps = [ "$zx/kernel/lib/libc" ]
+}
+
+phys_qemu_test("backtrace-test") {
+  sources = [ "backtrace-test.cc" ]
+  deps = [ "$zx/kernel/lib/libc" ]
+}
+
+# Ideally we'd test all four combinations on arm64 and both combinations on
+# x86.  But the common library code is always compiled with shadow-call-stack
+# on arm64 so we can't disable the ABI support for it and with safe-stack on
+# x86 so we can't disable the ABI support for it there.  The start.S code only
+# enables extra stack support conditionally so as not to waste space, so there
+# isn't a good way to test non-default configurations.
+source_set("unittests") {
+  testonly = true
+  sources = [
+    "phys-unittests.cc",
+    "stack-tests.cc",
+  ]
+  deps = [
+    ":test-main",
+    "$zx/kernel/lib/libc",
+    "$zx/kernel/lib/unittest",
+    "$zx/kernel/tests",
+  ]
+}
+
+phys_qemu_test("qemu-phys-unittests") {
+  deps = [ ":unittests" ]
+}
+
+group("test") {
+  testonly = true
+
+  deps = [
+    ":backtrace-test",
+    ":hello-world-test",
+    ":qemu-phys-unittests",
+  ]
+}

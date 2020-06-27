@@ -1,0 +1,54 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":zx" ]
+}
+
+test("zx") {
+  output_name = "zx-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  sources = [
+    "object-test.cc",
+    "traits.cc",
+    "util.cc",
+    "util.h",
+    "zx-test.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.boot:fuchsia.boot_c",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/fzl",
+  ]
+}
+
+unittest_package("zx-package") {
+  package_name = "zx"
+  deps = [ ":zx" ]
+
+  tests = [
+    {
+      name = "zx-test"
+    },
+  ]
+}

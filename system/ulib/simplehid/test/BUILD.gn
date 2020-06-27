@@ -1,0 +1,61 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":simplehid" ]
+}
+
+test("simplehid") {
+  output_name = "simplehid-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "simplehid-test.cc" ]
+  deps = [
+    "//sdk/banjo/ddk.protocol.hidbus",
+    "//sdk/lib/fdio",
+    "//src/devices/lib/driver",
+    "//src/devices/testing/fake_ddk",
+    "//src/lib/ddk",
+    "//src/lib/ddktl",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/fzl",
+    "//zircon/system/ulib/simplehid",
+  ]
+}
+
+unittest_package("simplehid-package") {
+  package_name = "simplehid"
+  deps = [ ":simplehid" ]
+
+  tests = [
+    {
+      name = "simplehid-test"
+    },
+  ]
+}

@@ -1,0 +1,23 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+executable("xdc-server") {
+  sources = [
+    "usb-handler.cc",
+    "xdc-server.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+    "//zircon/system/ulib/xdc-host-utils",
+    "//zircon/system/ulib/xdc-server-utils",
+  ]
+}

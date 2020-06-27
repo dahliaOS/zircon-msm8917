@@ -1,0 +1,136 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+import("//build/fuzzing/fuzzer.gni")
+import("//build/test/test_package.gni")
+group("test") {
+  testonly = true
+  deps = [
+    ":fs-connection",
+    ":fs-vnode",
+    ":vmo_file-fuzzer",
+  ]
+}
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+
+test("fs-vnode") {
+  output_name = "fs-vnode-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [
+    "lazy_dir_tests.cc",
+    "main.cc",
+    "pseudo_dir_tests.cc",
+    "pseudo_file_tests.cc",
+    "remote_dir_tests.cc",
+    "remote_file_tests.cc",
+    "service_tests.cc",
+    "teardown_tests.cc",
+    "tracked_remote_dir_tests.cc",
+    "transaction_counting_tests.cc",
+    "vfs_tests.cc",
+    "vfs_types_tests.cc",
+    "vmo_file_tests.cc",
+    "vnode_contract_tests.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/async-testing",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/trace",
+    "//zircon/system/ulib/trace-engine",
+    "//zircon/system/ulib/unittest",
+  ]
+}
+
+test("fs-connection") {
+  output_name = "fs-connection-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [
+    "connection_contract_tests.cc",
+    "connection_integration_tests.cc",
+    "connection_rights_tests.cc",
+    "fidl_transaction_tests.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/fs",
+  ]
+}
+
+fuzzer("vmo_file-fuzzer") {
+  sources = [ "vmo_file-fuzzer.cc" ]
+  deps = [ "//zircon/system/ulib/fs" ]
+}
+
+unittest_package("fs-connection-package") {
+  package_name = "fs-connection"
+  deps = [ ":fs-connection" ]
+
+  tests = [
+    {
+      name = "fs-connection-test"
+    },
+  ]
+}
+
+unittest_package("fs-vnode-package") {
+  package_name = "fs-vnode"
+  deps = [ ":fs-vnode" ]
+
+  tests = [
+    {
+      name = "fs-vnode-test"
+    },
+  ]
+}

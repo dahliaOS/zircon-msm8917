@@ -1,0 +1,67 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("$zx/public/gn/config/standard.gni")
+import("$zx/public/gn/toolchain/environment_redirect.gni")
+
+# IMPORTANT NOTE!
+# No new library should be added to the following targets. If you think you need
+# to add one, reach out to pylaligand@ and shayba@ first.
+# See http://fxb/36548.
+
+if (current_cpu != "") {
+  group("utest") {
+    testonly = true
+
+    # For unittests, the recommended naming scheme is:
+    #   path/to/code/test
+    # or
+    #   path/to/code:test
+    #
+    # Where "test" is a group containing all unittest labels.
+    deps = [
+      ":host",  # TODO(mcgrathr): reach this differently?
+      "$zx/kernel/phys:tests",
+      "$zx/system/ulib/c/test/noop:test",
+      "abi-type-validator",
+      "libc",
+
+      # disabled for now:
+      #"bad-kernel-access",
+    ]
+  }
+
+  group("host-tests") {
+    testonly = true
+    deps = [
+      "$zx/system/ulib/hwreg/test/asm",
+      "$zx/tools/kazoo:tests",
+    ]
+  }
+}
+
+# Build the host tests for each host.
+foreach(host, standard_build_hosts) {
+  environment_redirect("host-tests-${host.os}-${host.cpu}") {
+    testonly = true
+    environment_label = "$zx/public/gn/toolchain:host"
+    cpu = host.cpu
+    os = host.os
+    direct = true
+    deps = [ ":host-tests" ]
+  }
+}
+
+group("host-tests-all-platforms") {
+  testonly = true
+  deps = []
+  foreach(host, standard_build_hosts) {
+    deps += [ ":host-tests-${host.os}-${host.cpu}" ]
+  }
+}
+
+group("host") {
+  testonly = true
+  deps = [ ":host-tests-${host_os}-${host_cpu}" ]
+}

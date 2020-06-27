@@ -1,0 +1,49 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+config("integer-paranoia") {
+  visibility = [ ":*" ]
+  cflags = [
+    "-fsanitize=integer-divide-by-zero,signed-integer-overflow",
+    "-fsanitize-undefined-trap-on-error",
+  ]
+}
+
+test("compiler") {
+  output_name = "compiler-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [
+    "integer.cc",
+    "no-unique-address.cc",
+  ]
+  configs += [ ":integer-paranoia" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+unittest_package("compiler-package") {
+  package_name = "compiler"
+  deps = [ ":compiler" ]
+
+  tests = [
+    {
+      name = "compiler-test"
+    },
+  ]
+}

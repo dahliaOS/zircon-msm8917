@@ -1,0 +1,58 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":intel-hda-utils-test" ]
+}
+
+test("intel-hda-utils-test") {
+  output_name = "intel-hda-utils-test-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [
+    "status_or_test.cc",
+    "status_test.cc",
+    "utils_test.cc",
+  ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/intel-hda",
+  ]
+}
+
+unittest_package("intel-hda-utils-test-package") {
+  package_name = "intel-hda-utils-test"
+  deps = [ ":intel-hda-utils-test" ]
+
+  tests = [
+    {
+      name = "intel-hda-utils-test-test"
+    },
+  ]
+}

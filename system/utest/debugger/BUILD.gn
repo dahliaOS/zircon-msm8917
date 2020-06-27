@@ -1,0 +1,70 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+# As of this writing, the best way to get this test on your system is to add //bundles/bringup:tests
+# to the base packages in your build. The binary ends up in /boot/test/sys/debugger-test
+test("debugger") {
+  output_name = "debugger-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [
+    "crash-and-recover.cc",
+    "crash-and-recover.h",
+    "debugger.cc",
+    "debugger.h",
+    "dyn_break_on_load.cc",
+    "hw-breakpoint-test.cc",
+    "inferior-control.cc",
+    "inferior-control.h",
+    "inferior.cc",
+    "inferior.h",
+    "main.cc",
+    "reg-get-set-test.cc",
+    "start-thread-reg-access.cc",
+    "suspend-on-start.cc",
+    "suspended-reg-access.cc",
+    "utils.cc",
+    "utils.h",
+    "watchpoint-test.cc",
+  ]
+
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/pretty",
+    "//zircon/public/lib/runtime",
+    "//zircon/public/lib/zircon-internal",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/backtrace-request",
+    "//zircon/system/ulib/test-utils",
+    "//zircon/system/ulib/unittest",
+  ]
+
+  deps += [ "//zircon/system/utest/dlopen-indirect-deps:dlopen-indirect-deps-test-module" ]
+
+  # TODO(46869): Fix the leaks and remove this.
+  deps += [ "//build/config/sanitizers:suppress-lsan.DO-NOT-USE-THIS" ]
+}
+
+unittest_package("debugger-package") {
+  package_name = "debugger"
+  deps = [ ":debugger" ]
+
+  tests = [
+    {
+      name = "debugger-test"
+    },
+  ]
+}

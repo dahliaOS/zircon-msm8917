@@ -1,0 +1,10 @@
+library fidl.test.json;
+
+protocol Parent {
+    First(request<Parent> request);
+};
+
+protocol Child {
+    compose Parent;
+    Second(request<Parent> request);
+};

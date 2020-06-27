@@ -1,0 +1,61 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+import("//build/fuzzing/fuzzer.gni")
+group("test") {
+  testonly = true
+  deps = [
+    ":utf_conversion-fuzzer",
+    ":utf_conversion-test",
+  ]
+}
+
+test("utf_conversion-test") {
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "main.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/pretty",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/utf_conversion",
+  ]
+}
+
+fuzzer("utf_conversion-fuzzer") {
+  sources = [ "utf_conversion-fuzzer.cc" ]
+  deps = [ "//zircon/system/ulib/utf_conversion" ]
+}
+
+unittest_package("utf-conversion-package") {
+  package_name = "utf-conversion"
+  deps = [ ":utf_conversion-test" ]
+
+  tests = [
+    {
+      name = "utf_conversion-test"
+    },
+  ]
+}

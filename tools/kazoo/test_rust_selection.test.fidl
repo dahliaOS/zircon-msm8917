@@ -1,0 +1,47 @@
+// Copyright 2019 The Fuchsia Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+library zx;
+
+using mutable_vector_void = vector<byte>;
+using voidptr = uint64;
+
+[Transport = "Syscall"]
+protocol Rust {
+    // Simple out ptr.
+    SimpleCase() -> (time time);
+
+    MultipleInHandles(vector<handle> handles) -> (status status);
+
+    // noreturn handled properly.
+    [noreturn]
+    ANoRetFunc();
+
+    // Function withot return handled properly too.
+    NoReturnValue(uint32 x);
+
+    // |buffer| treated mutable.
+    InoutArgs(handle:VMO handle,
+              uint32 op,
+              uint64 offset,
+              uint64 size,
+              mutable_vector_void buffer)
+        -> (status status);
+
+    // |input| treated const
+    ConstInput(vector<byte> input) -> (status status);
+
+    VariousBasicTypeNames(bool a,
+                          byte b,
+                          int32 d,
+                          int64 e,
+                          uint16 f,
+                          uint32 g,
+                          uint64 h,
+                          usize i,
+                          uintptr j,
+                          voidptr k,
+                          time l,
+                          ticks m);
+};

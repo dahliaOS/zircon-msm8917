@@ -1,0 +1,33 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+import("//build/sdk/sdk_host_tool.gni")
+
+executable("minfs") {
+  sources = [ "main.cc" ]
+  deps = [
+    "//zircon/public/lib/bitmap",
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/fs-host",
+    "//zircon/system/ulib/fs/journal",
+    "//zircon/system/ulib/minfs",
+  ]
+
+  if (!is_fuchsia) {
+    deps += [ "//zircon/public/lib/zx-panic-libc" ]
+  }
+}
+
+sdk_host_tool("minfs_sdk") {
+  category = "partner"
+  output_name = "minfs"
+  deps = [ ":minfs" ]
+}

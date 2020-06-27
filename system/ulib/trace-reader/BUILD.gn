@@ -1,0 +1,50 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("trace-reader") {
+  sdk = "source"
+  sdk_headers = [
+    "trace-reader/file_reader.h",
+    "trace-reader/reader.h",
+    "trace-reader/reader_internal.h",
+    "trace-reader/records.h",
+  ]
+  host = true
+  sources = [
+    "file_reader.cc",
+    "reader.cc",
+    "reader_internal.cc",
+    "records.cc",
+  ]
+  public_deps = [
+    # <trace-reader/records.h> has #include <trace-engine/types.h>.
+    "//zircon/system/ulib/trace-engine:trace-engine-headers-for-reader",
+
+    # <trace-reader/records.h> has #include <fbl/array.h>.
+    "//zircon/public/lib/fbl",
+
+    # <trace-reader/records.h> has #include <lib/fit/variant.h>.
+    "//zircon/public/lib/fit",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+  ]
+
+  # TODO(41892): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  configs += [ "//build/config:temporarily_disable_ubsan_do_not_use" ]
+}

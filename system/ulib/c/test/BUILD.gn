@@ -1,0 +1,172 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+
+default_stack_size_cases = [
+  {
+    # This uses the compiled-in default.
+    name = "default"
+  },
+  {
+    # This uses an arbitrary, non-default size.  It needs to be an even
+    # multiple of page size, since specified sizes are always rounded up.
+    name = "phdr"
+    size = 1114112  # 0x110000
+  },
+]
+
+foreach(case, default_stack_size_cases) {
+  test("default-stack-size-${case.name}") {
+    # Dependent manifests unfortunately cannot be marked as `testonly`.
+    # TODO(44278): Remove when converting this file to proper GN build idioms.
+    if (is_fuchsia) {
+      testonly = false
+    }
+    if (is_fuchsia) {
+      configs += [ "//build/unification/config:zircon-migrated" ]
+    }
+    if (is_fuchsia) {
+      fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+      if (configs + fdio_config - fdio_config != configs) {
+        configs -= fdio_config
+      }
+    }
+    sources = [ "default-stack-size-test.cc" ]
+    deps = [
+      "//sdk/lib/fdio",
+      "//zircon/public/lib/zircon-internal",
+      "//zircon/public/lib/zxtest",
+    ]
+    if (defined(case.size)) {
+      defines = [ "STACK_TEST_EXPECTED_SIZE=${case.size}" ]
+      ldflags = [ "-Wl,-z,stack-size=${case.size}" ]
+    }
+  }
+}
+
+executable("debugdata-test-helper") {
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Flip back to true.
+  testonly = false
+  sources = [ "debugdata-test-helper.cc" ]
+  deps = [ "//zircon/public/lib/zx" ]
+}
+
+test("debugdata") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "debugdata.cc" ]
+  data_deps = [ ":debugdata-test-helper" ]
+  deps = [
+    "//sdk/fidl/fuchsia.debugdata:fuchsia.debugdata_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zircon-internal",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/fidl-async",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+    "//zircon/system/ulib/fs",
+  ]
+  output_dir = "$root_out_dir/zircon-migrated"
+}
+
+test("posix-clocks") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "posix-clocks.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+test("atexit") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "atexit.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+group("test") {
+  testonly = true
+  deps = [
+    ":atexit",
+    ":debugdata",
+    ":posix-clocks",
+  ]
+  foreach(case, default_stack_size_cases) {
+    deps += [ ":default-stack-size-${case.name}" ]
+  }
+}
+
+foreach(case, default_stack_size_cases) {
+}

@@ -1,0 +1,50 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/config/fuchsia/rules.gni")
+
+driver_module("e1000") {
+  defines = [ "_ALL_SOURCE" ]
+  configs += [ "//build/config/fuchsia:enable_zircon_asserts" ]
+  configs -= [ "//build/config/fuchsia:no_cpp_standard_library" ]
+  configs += [ "//build/config/fuchsia:static_cpp_standard_library" ]
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [
+    "e1000_80003es2lan.c",
+    "e1000_82540.c",
+    "e1000_82541.c",
+    "e1000_82542.c",
+    "e1000_82543.c",
+    "e1000_82571.c",
+    "e1000_82575.c",
+    "e1000_api.c",
+    "e1000_i210.c",
+    "e1000_ich8lan.c",
+    "e1000_mac.c",
+    "e1000_manage.c",
+    "e1000_mbx.c",
+    "e1000_nvm.c",
+    "e1000_osdep.c",
+    "e1000_phy.c",
+    "e1000_vf.c",
+    "fuchsia.c",
+  ]
+  deps = [
+    "//sdk/banjo/ddk.protocol.ethernet",
+    "//sdk/banjo/ddk.protocol.pci",
+    "//src/devices/lib/driver",
+    "//src/devices/pci/lib/device-protocol-pci",
+    "//src/lib/ddk",
+  ]
+}

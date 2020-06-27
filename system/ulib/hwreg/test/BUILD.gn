@@ -1,0 +1,84 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [
+    ":libhwreg",
+    ":libhwreg-i2c",
+  ]
+}
+
+test("libhwreg") {
+  output_name = "libhwreg-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [
+    "asm-test.cc",
+    "bitfields-test.cc",
+    "indirect-test.cc",
+  ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//src/devices/lib/mmio",
+    "//src/lib/ddk",
+    "//src/lib/ddktl",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/hwreg",
+    "//zircon/public/lib/hwreg-mock",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+test("libhwreg-i2c") {
+  output_name = "libhwreg-i2c-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "i2c-hwreg-test.cc" ]
+  deps = [
+    "//sdk/banjo/ddk.protocol.i2c",
+    "//sdk/lib/fdio",
+    "//src/devices/i2c/testing/mock-i2c",
+    "//src/lib/ddk",
+    "//src/lib/ddktl",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/hwreg-i2c",
+  ]
+}
+
+unittest_package("libhwreg-package") {
+  package_name = "libhwreg"
+  deps = [ ":libhwreg" ]
+
+  tests = [
+    {
+      name = "libhwreg-test"
+    },
+  ]
+}
+
+unittest_package("libhwreg-i2c-package") {
+  package_name = "libhwreg-i2c"
+  deps = [ ":libhwreg-i2c" ]
+
+  tests = [
+    {
+      name = "libhwreg-i2c-test"
+    },
+  ]
+}

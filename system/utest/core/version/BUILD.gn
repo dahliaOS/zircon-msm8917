@@ -1,0 +1,44 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+source_set("version") {
+  configs += [ "//build/unification/config:zircon-migrated" ]
+
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = false
+  sources = [ "version-test.cc" ]
+  deps = [
+    ":cxx14",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+source_set("cxx14") {
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  visibility = [ ":*" ]
+
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = false
+  sources = [
+    "cxx14.cc",
+    "cxx14.h",
+  ]
+
+  # Remove the default -std=c++17 and compile with c++14.
+  configs -= [ "//build/config:language" ]
+  cflags_cc = [ "-std=c++14" ]
+}

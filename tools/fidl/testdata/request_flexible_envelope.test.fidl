@@ -1,0 +1,16 @@
+library fidl.test.json;
+
+flexible union FlexibleFoo {
+    1: string s;
+    2: int32 i;
+};
+
+union StrictFoo {
+    1: string s;
+    2: int32 i;
+};
+
+protocol Protocol {
+    RequestStrictResponseFlexible(StrictFoo s) -> (FlexibleFoo f);
+    RequestFlexibleResponseStrict(FlexibleFoo s) -> (StrictFoo f);
+};

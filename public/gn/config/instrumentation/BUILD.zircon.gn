@@ -1,0 +1,188 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("$zx/public/gn/toolchain/clang.gni")
+
+declare_args() {
+  # Default [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)
+  # options (before the `ASAN_OPTIONS` environment variable is read at
+  # runtime).  This can be set as a build argument to affect most "asan"
+  # variants in $variants (which see), or overridden in $toolchain_args in
+  # one of those variants.  Note that setting this nonempty may conflict
+  # with programs that define their own `__asan_default_options` C
+  # function.
+  asan_default_options = ""
+  if (is_fuchsia) {
+    # TODO(45047): Temporary until all lsan bugs are filed and marked with
+    # deps += [ "$zx/public/gn/config/instrumentation:suppress-lsan.DO-NOT-USE-THIS" ]
+    # TODO(52369): Temporary until asan runtime decommits large allocations.
+    asan_default_options = "detect_leaks=0:clear_shadow_mmap_threshold=16384"
+  }
+
+  # Default [UndefinedBehaviorSanitizer](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html)
+  # options (before the `UBSAN_OPTIONS` environment variable is read at
+  # runtime).  This can be set as a build argument to affect most "ubsan"
+  # variants in $variants (which see), or overridden in $toolchain_args in
+  # one of those variants.  Note that setting this nonempty may conflict
+  # with programs that define their own `__ubsan_default_options` C
+  # function.
+  ubsan_default_options = "print_stacktrace=1:halt_on_error=1"
+}
+
+# TODO(45047): Temporary while leaks are plugged.
+# As leak bugs are found, file a bug #nnnnn for the leaky test/component,
+# and then add:
+# ```
+#   # TODO(nnnnn): Fix the leaks and remove this.
+#   deps += [ "$zx/public/gn/config/instrumentation:suppress-lsan.DO-NOT-USE-THIS" ]
+# ```
+# to the target that builds the leaky code.  When all leaky tests have been
+# marked that way, the asan_default_options default above will be removed.
+source_set("suppress-lsan.DO-NOT-USE-THIS") {
+  # This would conflict with the generic one.
+  if (asan_default_options == "") {
+    sources = [ "asan_default_options.c" ]
+    defines = [ "ASAN_DEFAULT_OPTIONS=\"detect_leaks=0\"" ]
+    configs -= [ "$zx_build/public/gn/config:visibility_hidden" ]
+  }
+}
+
+config("asan") {
+  compiler_flags = [ "-fsanitize=address" ]
+  asmflags = compiler_flags
+  cflags = compiler_flags
+  ldflags = compiler_flags
+  if (is_kernel) {
+    cflags += [
+      # This tells the instrumentation to treat user-defined operator
+      # new[] like the standard one and check that the array cookie is
+      # not clobbered.  fbl::AllocChecker new[] is the only user-defined
+      # operator new[] in the kernel, and it just wraps the normal
+      # allocation semantics.
+      "-fsanitize-address-poison-custom-array-cookie",
+
+      # TODO(30033): Disable poisoning around stack allocations until later.
+      "-mllvm",
+      "-asan-stack=0",
+
+      # TODO(30033): Disable poisoning around globals until later.
+      "-mllvm",
+      "-asan-globals=0",
+
+      # Disable all inline instrumentation because it wants to use the
+      # userland shadow layout with fixed zero address.
+      # TODO(30033): Ideally, we'd use inline instrumentation configured
+      # for the kernel's shadow layout.
+      "-mllvm",
+      "-asan-instrumentation-with-call-threshold=0",
+    ]
+  }
+}
+
+source_set("asan_default_options") {
+  if (asan_default_options != "" && !is_kernel) {
+    sources = [ "asan_default_options.c" ]
+    defines = [ "ASAN_DEFAULT_OPTIONS=\"${asan_default_options}\"" ]
+
+    # On Fuchsia, the ASan runtime is dynamically linked and needs to have
+    # the __asan_default_options symbol exported.  On systems where the
+    # ASan runtime is statically linked, it doesn't matter either way.
+    configs -= [ "$zx_build/public/gn/config:visibility_hidden" ]
+  }
+}
+
+config("ubsan") {
+  compiler_flags = [ "-fsanitize=undefined" ]
+  asmflags = compiler_flags
+  cflags = compiler_flags
+  ldflags = compiler_flags
+}
+
+source_set("ubsan_default_options") {
+  if (ubsan_default_options != "") {
+    sources = [ "ubsan_default_options.c" ]
+    defines = [ "UBSAN_DEFAULT_OPTIONS=\"${ubsan_default_options}\"" ]
+
+    # On Fuchsia, the Ubsan runtime is dynamically linked and needs to have
+    # the __ubsan_default_options symbol exported.  On systems where the
+    # ASan runtime is statically linked, it doesn't matter either way.
+    configs -= [ "$zx_build/public/gn/config:visibility_hidden" ]
+  }
+}
+
+# ubsan-trap is pure instrumentation with no runtime.
+config("ubsan-trap") {
+  if (is_gcc) {
+    compiler_flags = [
+      "-fsanitize=undefined",
+      "-fsanitize-undefined-trap-on-error",
+    ]
+  } else {
+    compiler_flags = [ "-fsanitize-trap=undefined" ]
+  }
+  asmflags = compiler_flags
+  cflags = compiler_flags
+  ldflags = compiler_flags
+}
+
+# NOTE: Every variant that includes any sancov configs must have "sancov"
+# in tags.  See $zx/system/ulib/c/sanitizers.  To make it harder to fail
+# to do this, only define the configs in toolchains with the tag.
+if (toolchain.tags + [ "sancov" ] - [ "sancov" ] != toolchain.tags) {
+  config("sancov") {
+    compiler_flags = [ "-fsanitize-coverage=trace-pc-guard" ]
+    asmflags = compiler_flags
+    cflags = compiler_flags
+    ldflags = compiler_flags
+  }
+
+  # This enables all the different kinds of sancov callbacks, not just
+  # the basic ones actually implemented by the canonical runtime.
+  config("sancov-full") {
+    compiler_flags = [ "-fsanitize-coverage=indirect-calls,trace-cmp,trace-div,trace-gep,trace-pc-guard,inline-8bit-counters,pc-table" ]
+    asmflags = compiler_flags
+    cflags = compiler_flags
+    ldflags = compiler_flags
+  }
+
+  # fuzzer instrumentation is a superset of the sancov instrumentation.
+  config("fuzzer") {
+    compiler_flags = [ "-fsanitize=fuzzer" ]
+    asmflags = compiler_flags
+    cflags = compiler_flags
+    ldflags = compiler_flags
+
+    # TODO(TC-458): Include libunwind in libclang_rt.fuzzer.a
+    libs = [ "unwind" ]
+  }
+
+  group("fuzzer_deps") {
+    if (is_fuchsia) {
+      # The statically-linked libFuzzer runtime depends on libfdio and
+      # libzircon.
+      deps = [
+        "$zx/system/ulib/fdio",
+        "$zx/system/ulib/zircon",
+      ]
+    }
+  }
+}
+
+config("profile") {
+  compiler_flags = [
+    "-fprofile-instr-generate",
+    "-fcoverage-mapping",
+  ]
+  asmflags = compiler_flags
+  cflags = compiler_flags
+  ldflags = compiler_flags
+  defines = [ "LLVM_PROFILE" ]
+}
+
+group("profile_deps") {
+  if (is_fuchsia && !is_kernel) {
+    # The statically-linked profiling runtime depends on libzircon.
+    deps = [ "$zx/system/ulib/zircon" ]
+  }
+}

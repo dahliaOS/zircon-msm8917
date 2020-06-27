@@ -1,0 +1,9 @@
+library bottom;
+
+struct Foo {
+    int32 a;
+};
+
+protocol Bottom {
+    GetFoo() -> (Foo foo);
+};

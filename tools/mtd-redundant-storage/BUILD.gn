@@ -1,0 +1,21 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+executable("mtd-redundant-storage") {
+  if (current_os == "linux") {
+    sources = [ "mtd-rs-tool.cc" ]
+  }
+  deps = [
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/zx-panic-libc",
+    "//zircon/system/ulib/nand-redundant-storage",
+  ]
+}

@@ -1,0 +1,62 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("buffer") {
+  sdk = "source"
+  sdk_headers = [
+    "storage/buffer/block_buffer_view.h",
+    "storage/buffer/block_buffer.h",
+    "storage/buffer/blocking_ring_buffer.h",
+    "storage/buffer/owned_vmoid.h",
+    "storage/buffer/ring_buffer.h",
+    "storage/buffer/vmo_buffer.h",
+    "storage/buffer/vmoid_registry.h",
+    "storage/buffer/array_buffer.h",
+  ]
+  host = true
+  sources = [
+    "array_buffer.cc",
+    "block_buffer.cc",
+  ]
+  static = true
+
+  if (is_fuchsia) {
+    sources += [
+      "blocking_ring_buffer.cc",
+      "owned_vmoid.cc",
+      "ring_buffer.cc",
+      "vmo_buffer.cc",
+    ]
+    public_deps = [
+      "//zircon/public/lib/fbl",
+      "//zircon/public/lib/zx",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/storage/operation",
+    ]
+    deps = [
+      "//sdk/lib/fdio",
+      "//zircon/public/lib/fbl",
+
+      # TODO(38240): Clean up any remaining 'fs' dependencies. Only for fs/trace
+      "//zircon/public/lib/zx",
+      "//zircon/system/ulib/fs",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/storage/operation",
+    ]
+  } else {
+    public_deps = [ "//zircon/system/public" ]
+  }
+}

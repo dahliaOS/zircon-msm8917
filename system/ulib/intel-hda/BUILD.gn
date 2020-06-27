@@ -1,0 +1,60 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("intel-hda") {
+  sdk = "source"
+  sdk_headers = [
+    "intel-hda/utils/status_or.h",
+    "intel-hda/utils/codec-commands.h",
+    "intel-hda/utils/codec-caps.h",
+    "intel-hda/utils/utils.h",
+    "intel-hda/utils/intel-hda-proto.h",
+    "intel-hda/utils/status.h",
+    "intel-hda/utils/intel-audio-dsp-ipc.h",
+    "intel-hda/utils/nhlt.h",
+    "intel-hda/utils/codec-state.h",
+    "intel-hda/utils/intel-hda-registers.h",
+    "intel-hda/codec-utils/stream-base.h",
+    "intel-hda/codec-utils/codec-driver-base.h",
+  ]
+  sources = [
+    "codec-utils/codec-driver-base.cc",
+    "codec-utils/stream-base.cc",
+    "utils/codec-caps.cc",
+    "utils/status.cc",
+    "utils/utils.cc",
+  ]
+  public_deps = [
+    # <intel-hda/codec-utils/stream-base.h> has #include <ddk/protocol/intelhda/codec.h>.
+    "//sdk/banjo/ddk.protocol.intelhda.codec",
+    "//sdk/fidl/fuchsia.hardware.audio:fuchsia.hardware.audio_llcpp",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/abs_clock",
+    "//zircon/system/ulib/audio-driver-proto",
+    "//zircon/system/ulib/dispatcher-pool",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.hardware.audio:fuchsia.hardware.audio_llcpp",
+    "//src/lib/ddk",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/abs_clock",
+    "//zircon/system/ulib/audio-driver-proto",
+    "//zircon/system/ulib/audio-proto-utils",
+    "//zircon/system/ulib/dispatcher-pool",
+  ]
+}

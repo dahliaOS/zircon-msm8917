@@ -1,0 +1,49 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("chromeos-disk-setup") {
+  output_name = "chromeos-disk-setup-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "chromeos-disk-setup.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.hardware.block:fuchsia.hardware.block_c",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/chromeos-disk-setup",
+    "//zircon/system/ulib/fs-management",
+    "//zircon/system/ulib/gpt",
+    "//zircon/system/ulib/unittest",
+    "//zircon/system/ulib/zxio",
+  ]
+
+  # TODO(41890): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  configs += [ "//build/config:temporarily_disable_ubsan_do_not_use" ]
+}
+
+unittest_package("chromeos-disk-setup-package") {
+  package_name = "chromeos-disk-setup"
+  deps = [ ":chromeos-disk-setup" ]
+
+  tests = [
+    {
+      name = "chromeos-disk-setup-test"
+    },
+  ]
+}

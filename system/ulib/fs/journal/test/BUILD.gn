@@ -1,0 +1,95 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+
+import("//build/fuzzing/fuzzer.gni")
+
+group("test") {
+  testonly = true
+  deps = [
+    ":journal-entry-fuzzer",
+    ":journal-fuzzer",
+    ":journal-replay-fuzzer",
+    ":journal-unit",
+  ]
+}
+
+test("journal-unit") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [
+    "background_executor_test.cc",
+    "data_streamer_test.cc",
+    "disk_struct_test.cc",
+    "entry_view_test.cc",
+    "header_view_test.cc",
+    "inspector_parser_test.cc",
+    "inspector_test.cc",
+    "journal_test.cc",
+    "operation_tracker_test.cc",
+    "replay_test.cc",
+    "replay_tree_test.cc",
+    "superblock_test.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/fs/journal",
+  ]
+
+  include_dirs = [ ".." ]
+}
+
+source_set("fuzz-utils") {
+  sources = [ "fuzzer_utils.cc" ]
+  public_deps = [
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/fs/journal",
+  ]
+}
+
+fuzzer("journal-fuzzer") {
+  sources = [ "journal_fuzztest.cc" ]
+  deps = [ ":fuzz-utils" ]
+  include_dirs = [ "test" ]
+}
+
+fuzzer("journal-entry-fuzzer") {
+  sources = [ "entry_parse_fuzztest.cc" ]
+  deps = [ ":fuzz-utils" ]
+  include_dirs = [ "test" ]
+}
+
+fuzzer("journal-replay-fuzzer") {
+  sources = [ "replay_fuzztest.cc" ]
+  deps = [ ":fuzz-utils" ]
+  include_dirs = [ "test" ]
+}

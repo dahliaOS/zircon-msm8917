@@ -1,0 +1,61 @@
+// Copyright 2019 The Fuchsia Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+library zx;
+
+// This file is copies of some syscalls that cover more unusual features (see
+// annotations at the method).
+
+using const_futexptr = int32;
+using Futex = int32;
+using mutable_uint32 = uint32;
+using mutable_vector_void = vector<byte>;
+using optional_signals = signals;
+using vector_void_u32size = vector<byte>;
+enum Clock : uint32 {
+    MONOTONIC = 0;
+    UTC = 1;
+    THREAD = 2;
+};
+
+
+[Transport="Syscall"]
+protocol Selection {
+    // Special futex handling.
+    FutexRequeue(const_futexptr value_ptr,
+                 uint32 wake_count,
+                 Futex current_value,
+                 const_futexptr requeue_ptr,
+                 uint32 requeue_count,
+                 handle new_requeue_owner) ->
+        (status status);
+
+    // Optional output (signals).
+    ObjectWaitOne(handle handle, signals signals, time deadline) ->
+        (status status, optional_signals observed);
+
+    // Argument reordering.
+    [ArgReorder="handle,data,offset,data_size,actual"]
+    KtraceRead(handle:RESOURCE handle, mutable_vector_void data, uint32 offset) ->
+        (status status, usize actual);
+
+    // Mutable uint32 in the middle of input parameters (rather than as an
+    // output).
+    PciCfgPioRw(handle:RESOURCE handle,
+                uint8 bus,
+                uint8 dev,
+                uint8 func,
+                uint8 offset,
+                mutable_uint32 val,
+                usize width,
+                bool write) ->
+        (status status);
+
+    // uint32_t for size of a "vector".
+    JobSetPolicy(handle:JOB handle, uint32 options, uint32 topic, vector_void_u32size policy) ->
+        (status status);
+
+    // Handling of enums.
+    ClockGet(Clock clock_id) -> (status status, time out);
+};

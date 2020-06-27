@@ -1,0 +1,62 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+syslog_headers = [
+  "lib/syslog/global.h",
+  "lib/syslog/logger.h",
+  "lib/syslog/wire_format.h",
+]
+
+zx_library("syslog") {
+  sdk = "shared"
+  sdk_publishable = true
+  sdk_headers = syslog_headers
+  shared = true
+  sources = [
+    "fdio_connect.cc",
+    "fx_logger.cc",
+    "global.cc",
+    "logger.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.logger:fuchsia.logger_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zx",
+  ]
+  runtime_deps = [ "//sdk/lib/fdio:fdio_sdk" ]
+}
+
+# This static library should have no shared library dependencies,
+# except libzircon, so it may be used from magma client driver libraries
+# such as the Vulkan ICD.
+# This library cannot connect to the logging service, so a console_fd
+# or log_service_channel must be provided at initialization.
+zx_library("syslog-static") {
+  sdk = "static"
+  sdk_headers = syslog_headers
+  sources = [
+    "fx_logger.cc",
+    "global.cc",
+    "logger.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+  ]
+  defines = [ "SYSLOG_STATIC" ]
+}

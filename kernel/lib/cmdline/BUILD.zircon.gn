@@ -1,0 +1,22 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+zx_library("cmdline") {
+  sdk = "source"
+  sdk_name = "kcmdline"
+  sdk_headers = [ "lib/cmdline.h" ]
+
+  # For use only in the kernel and its own unit tests.
+  visibility = [
+    "$zx/kernel/*",
+    "$zx/system/ulib",
+    "$zx/system/utest/kernel-cmdline/*",
+  ]
+  kernel = true
+  static = true
+  sources = [ "cmdline.cc" ]
+  deps = [ "$zx/system/ulib/fbl" ]
+}

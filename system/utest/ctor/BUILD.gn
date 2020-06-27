@@ -1,0 +1,48 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("ctor") {
+  output_name = "ctor-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "ctor.cc" ]
+  deps = [
+    ":dso-ctor",
+    "//sdk/lib/fdio",
+    "//zircon/system/ulib/unittest",
+  ]
+}
+
+shared_library("dso-ctor") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = false
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  visibility = [ ":*" ]
+  sources = [ "dso-ctor/dso-ctor.cc" ]
+  deps = [ "//zircon/system/ulib/unittest" ]
+}
+
+unittest_package("ctor-package") {
+  package_name = "ctor"
+  deps = [ ":ctor" ]
+
+  tests = [
+    {
+      name = "ctor-test"
+    },
+  ]
+}

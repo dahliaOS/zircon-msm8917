@@ -1,0 +1,110 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("$zx_build/public/gn/config/standard.gni")
+import("$zx_build/public/gn/zbi.gni")
+
+assert(current_toolchain != default_toolchain)
+assert(current_cpu != "")
+
+# IMPORTANT NOTE!
+# No new library should be added to the following targets. If you think you need
+# to add one, reach out to pylaligand@ and shayba@ first.
+# See http://fxb/36548.
+
+group("ulib") {
+  testonly = true
+  deps = [
+    "$zx/kernel/lib/arch",
+    "$zx/kernel/lib/arch/$zircon_cpu",
+    "$zx/kernel/lib/cmdline",
+    "$zx/kernel/lib/counters",
+    "$zx/third_party/ulib",
+    "affine",
+    "async",
+    "async:async-cpp",
+    "bitmap",
+    "c",
+    "c:crt1",
+    "cmdline",
+    "ddk-platform-defs",
+    "elf-psabi",
+    "elfload",
+    "explicit-memory",
+    "fbl",
+    "ffl",
+    "fidl",
+    "fidl:fidl-llcpp",
+    "fidl:fidl_base",
+    "fit",
+    "gfx",
+    "gfx-font-data",
+    "hwreg",
+    "hwreg:hwreg-mock",
+    "lazy_init",
+    "ldmsg",
+    "lockdep",
+    "mmio-ptr",
+    "mmio-ptr:mmio-ptr-fake",
+    "mock-function",
+    "pretty",
+    "ram-crashlog",
+    "region-alloc",
+    "runtime",
+    "smbios",
+    "sync",
+    "syscalls-headers",
+    "tftp",
+    "uart",
+    "uart:uart-mock",
+    "vdso-code-header",
+    "zbi",
+    "zbitl",
+    "zircon",
+    "zircon:zircon-headers",
+    "zircon-internal",
+    "zx",
+    "zx-panic-libc",
+    "zxc",
+    "zxtest",
+  ]
+}
+
+group("ulib-host") {
+  testonly = true
+  deps = [
+    "$zx/kernel/lib/arch",
+    "$zx/kernel/lib/arch/$zircon_cpu",
+    "$zx/kernel/lib/heap/cmpctmalloc",
+    "$zx/third_party/ulib/boringssl",
+    "$zx/third_party/ulib/cksum",
+    "$zx/third_party/ulib/lz4",
+    "$zx/third_party/ulib/safemath",
+    "$zx/third_party/ulib/zstd",
+    "$zx/third_party/ulib/zstd:zstdseek",
+    "bitmap",
+    "cmdline",
+    "fbl",
+    "ffl",
+    "fidl:fidl_base",
+    "fit",
+    "hwreg",
+    "hwreg:hwreg-mock",
+    "mock-function",
+    "pretty",
+    "tftp",
+    "uart",
+    "uart:uart-mock",
+    "zbi",
+    "zbitl",
+    "zircon:zircon-headers",
+    "zircon-internal",
+    "zx-panic-libc",
+    "zxc",
+    "zxtest",
+  ]
+  if (current_os == "linux") {
+    deps += [ "$zx/third_party/ulib/usbhost:usbhost-static" ]
+  }
+}

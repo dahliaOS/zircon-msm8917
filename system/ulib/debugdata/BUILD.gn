@@ -1,0 +1,44 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("debugdata") {
+  sources = [ "debugdata.cc" ]
+  sdk = "source"
+  sdk_headers = [ "lib/debugdata/debugdata.h" ]
+  deps = [
+    "//sdk/fidl/fuchsia.debugdata:fuchsia.debugdata_llcpp",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/fs",
+  ]
+  public_deps = [
+    # <debugdata/debugdata.h has #include <fuchsia/debugdata/llcpp/fidl.h>.
+    "//sdk/fidl/fuchsia.debugdata:fuchsia.debugdata_llcpp",
+
+    # <debugdata/debugdata.h> has #include <fbl/unique_fd.h>.
+    "//zircon/public/lib/fbl",
+
+    # <debugdata/debugdata.h> has #include <lib/async/cpp/wait.h>.
+    "//zircon/public/lib/async-cpp",
+
+    # <debugdata/debugdata.h> has #include <lib/zircon-internal/fnv1hash.h>.
+    "//zircon/public/lib/zircon-internal",
+  ]
+}

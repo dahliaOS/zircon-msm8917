@@ -1,0 +1,63 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("tee-client-api") {
+  sdk = "shared"
+  sdk_headers = []
+  foreach(file,
+          [
+            "tee_client_api.h",
+            "tee-client-types.h",
+          ]) {
+    sdk_headers += [ "tee-client-api/$file" ]
+  }
+  shared = true
+  static = true
+  sources = [ "tee-client-api.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.hardware.tee:fuchsia.hardware.tee_llcpp",
+    "//sdk/fidl/fuchsia.tee:fuchsia.tee_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zx",
+  ]
+}
+
+zx_library("tee-client-api-static") {
+  sdk = "static"
+  sdk_headers = [
+    "tee-client-api/tee_client_api.h",
+    "tee-client-api/tee-client-types.h",
+  ]
+  static = true
+  sources = [ "tee-client-api.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.hardware.tee:fuchsia.hardware.tee_llcpp",
+    "//sdk/fidl/fuchsia.tee:fuchsia.tee_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zx",
+  ]
+}
+
+zx_library("tee-client-api-headers") {
+  sdk = "source"
+  sdk_headers = [
+    "tee-client-api/tee_client_api.h",
+    "tee-client-api/tee-client-types.h",
+  ]
+  sources = []
+}

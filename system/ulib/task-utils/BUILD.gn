@@ -1,0 +1,32 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("task-utils") {
+  sdk = "source"
+  sdk_headers = [
+    "task-utils/get.h",
+    "task-utils/walker.h",
+  ]
+  sources = [
+    "get.c",
+    "walker.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.boot:fuchsia.boot_c",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zx",
+  ]
+}

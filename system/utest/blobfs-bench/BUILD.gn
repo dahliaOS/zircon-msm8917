@@ -1,0 +1,71 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("blobfs-bench") {
+  output_name = "blobfs-bench-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "blobfs-bench.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_c",
+    "//sdk/lib/fdio",
+    "//third_party/boringssl",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/blobfs",
+    "//zircon/system/ulib/digest",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/fs-management",
+    "//zircon/system/ulib/fs-test-utils",
+    "//zircon/system/ulib/fvm",
+    "//zircon/system/ulib/fzl",
+    "//zircon/system/ulib/gpt",
+    "//zircon/system/ulib/memfs",
+    "//zircon/system/ulib/memfs:memfs-cpp",
+    "//zircon/system/ulib/perftest",
+    "//zircon/system/ulib/ramdevice-client",
+    "//zircon/system/ulib/trace",
+    "//zircon/system/ulib/trace-engine",
+    "//zircon/system/ulib/trace-provider:trace-provider-with-fdio",
+    "//zircon/system/ulib/unittest",
+  ]
+}
+
+unittest_package("blobfs-bench-package") {
+  package_name = "blobfs-bench"
+  deps = [ ":blobfs-bench" ]
+
+  tests = [
+    {
+      name = "blobfs-bench-test"
+    },
+  ]
+}

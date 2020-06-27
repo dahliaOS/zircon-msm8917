@@ -1,0 +1,52 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+# Note: The appearance of "sdk" does not mean this will or is intended to be
+# in the sdk. It's just the way we export from zircon for use elsewhere.
+zx_library("trace-test-utils") {
+  sdk = "source"
+  sdk_headers = [
+    "trace-test-utils/compare_records.h",
+    "trace-test-utils/fixture.h",
+    "trace-test-utils/read_records.h",
+    "trace-test-utils/squelch.h",
+  ]
+  testonly = true
+  sources = [
+    "compare_records.cc",
+    "fixture.cc",
+    "read_records.cc",
+    "squelch.cc",
+  ]
+  public_deps = [
+    # <trace-test-utils/fixture.h> needs these
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/trace-engine",
+    "//zircon/system/ulib/trace-reader",
+  ]
+  deps = [
+    # The kind of engine to use is up to the client, so we don't provide any
+    # trace-engine dependency here.
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/trace-provider:trace-handler",
+    "//zircon/system/ulib/trace-reader",
+  ]
+}

@@ -1,0 +1,173 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/unification//zbi/migrated_zbi_test.gni")
+
+# Each subdirectory just provides an eponymous source_set().
+core_tests = [
+  "c11-condvar",
+  "c11-mutex",
+  "c11-thread",
+  "channel",
+  "channel-write-etc",
+  "clock",
+  "elf-tls",
+  "event-pair",
+  "fifo",
+  "fpu",
+  "futex",
+  "handle-close",
+  "handle-dup",
+  "handle-info",
+  "handle-transfer",
+  "handle-wait",
+  "job",
+  "memory-mapping",
+  "object-child",
+  "object-info",
+  "object-wait",
+  "pager",
+  "port",
+  "process",
+  "pthread",
+  "pthread-barrier",
+  "pthread-tls",
+  "socket",
+  "stack",
+  "stream",
+  "sync-completion",
+  "sync-condition",
+  "sync-mutex",
+  "threads",
+  "time",
+  "version",
+  "vmar",
+  "vmo",
+]
+
+# These tests need to run in the unified core-tests binary because
+# they either call get_root_resource() or they need to run in a job
+# tree without any exception handler.
+unified_only = [
+  "bad-syscall",
+  "bti",
+  "default-exception-handler",  # needs job tree w/o exception handler.
+  "debuglog:unified-only",
+  "interrupt",
+  "profile",
+  "resource",
+  "system-event",
+]
+
+# Build each test as a standalone binary meant to be run by runtests.
+foreach(test_name, core_tests) {
+  test(test_name) {
+    output_name = "core-$test_name"
+
+    # Dependent manifests unfortunately cannot be marked as `testonly`.
+    # TODO(44278): Remove when converting this file to proper GN build idioms.
+    if (is_fuchsia) {
+      testonly = false
+    }
+    if (is_fuchsia) {
+      configs += [ "//build/unification/config:zircon-migrated" ]
+    }
+    if (is_fuchsia) {
+      fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+      if (configs + fdio_config - fdio_config != configs) {
+        configs -= fdio_config
+      }
+    }
+    deps = [ test_name ]
+  }
+}
+
+# Now build all of those (and more) together into the core-tests
+# binary.  This can and must be run directly from userboot because
+# some of the tests require the root resource handle or no system
+# services whatsoever.
+test("standalone") {
+  output_name = "core-standalone-test"
+
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  deps = core_tests + unified_only
+  sources = [ "libc-and-io-stubs.c" ]
+  deps += [ "//zircon/public/lib/zxtest" ]
+}
+
+# Make that into a bootable ZBI with just the kernel.
+migrated_zbi_test("core-tests") {
+  assert(current_cpu != "")
+
+  args = [
+    "userboot=test/core-standalone-test",
+    "kernel.enable-debugging-syscalls=true",
+    "kernel.ram.reserve.test=0x8000,0xXXXXXXXXXXXXXXXX",
+  ]
+
+  deps = [
+    ":standalone",
+    "//build/unification/zbi:kernel",
+  ]
+  assert_no_deps = [
+    "//zircon/system/core/*",
+    "//zircon/system/dev/*",
+  ]
+
+  device_types = [
+    "AEMU",
+    "Astro",
+    "QEMU",
+    "Intel NUC Kit NUC7i5DNHE",
+    "Sherlock",
+  ]
+}
+
+# If we are building for x64, make sure to run the core tests on a system which
+# has been  configured to force selection of HPET as the timing source instead
+# of choosing TSC if possible.
+if (current_cpu == "x64") {
+  # Make that into a bootable ZBI with just the kernel.
+  migrated_zbi_test("core-tests-hpet") {
+    args = [
+      "userboot=test/core-standalone-test",
+      "kernel.wallclock=hpet",
+      "kernel.enable-debugging-syscalls=true",
+      "kernel.ram.reserve.test=0x8000,0xXXXXXXXXXXXXXXXX",
+    ]
+    deps = [
+      ":standalone",
+      "//build/unification/zbi:kernel",
+    ]
+    assert_no_deps = [
+      "//zircon/system/core/*",
+      "//zircon/system/dev/*",
+    ]
+    device_types = [ "Intel NUC Kit NUC7i5DNHE" ]
+  }
+}

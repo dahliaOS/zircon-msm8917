@@ -1,0 +1,69 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("$zx/public/gn/config/levels.gni")
+
+declare_args() {
+  # Maximum number of CPUs the kernel will run on (others will be ignored).
+  smp_max_cpus = 32
+
+  if (current_cpu == "arm64") {
+    smp_max_cpus = 16
+  }
+
+  # Virtual address where the kernel is mapped statically.  This is the
+  # base of addresses that appear in the kernel symbol table.  At runtime
+  # KASLR relocation processing adjusts addresses in memory from this base
+  # to the actual runtime virtual address.
+  if (current_cpu == "arm64") {
+    kernel_base = "0xffffffff00000000"
+  } else if (current_cpu == "x64") {
+    kernel_base = "0xffffffff80100000"  # Has KERNEL_LOAD_OFFSET baked into it.
+  }
+
+  # Enable kernel lock dependency tracking.
+  enable_lock_dep = false
+
+  # The level of detail for scheduler traces when enabled. Values greater than
+  # zero add increasing details at the cost of increased trace buffer use.
+  #
+  # 0 = Default kernel:sched tracing.
+  # 1 = Adds duration traces for key scheduler operations.
+  # 2 = Adds flow events from wakeup to running state.
+  # 3 = Adds detailed internal durations and probes.
+  scheduler_tracing_level = 0
+
+  # Disable kernel PCI driver support. A counterpart of the the build
+  # flag platform_enable_user_pci in //src/devices/bus/drivers/pci/pci.gni.
+  disable_kernel_pci = false
+
+  # Extra macro definitions for kernel code, e.g. "DISABLE_KASLR",
+  # "ENABLE_KERNEL_LL_DEBUG".
+  kernel_extra_defines = []
+
+  # Enables various kernel debugging and diagnostic features.  Valid
+  # values are between 0-3.  The higher the value, the more that are
+  # enabled.  A value of 0 disables all of them.
+  #
+  # TODO(41790): This value is derived from assert_level.  Decouple
+  # the two and set kernel_debug_level independently.
+  kernel_debug_level = assert_level
+
+  # Controls the verbosity of kernel dprintf messages. The higher the value,
+  # the more dprintf messages emitted. Valid values are 0-2 (inclusive):
+  #   0 - CRITCAL / ALWAYS
+  #   1 - INFO
+  #   2 - SPEW
+  kernel_debug_print_level = 2
+}
+
+declare_args() {
+  # Enable kernel lock dependency tracking tests.  By default this is
+  # enabled when tracking is enabled, but can also be eanbled independently
+  # to assess whether the tests build and *fail correctly* when lockdep is
+  # disabled.
+  enable_lock_dep_tests = enable_lock_dep
+}

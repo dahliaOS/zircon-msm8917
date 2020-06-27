@@ -1,0 +1,49 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+
+group("test") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Restore to true when converting this file to proper GN build idioms.
+  testonly = false
+  deps = [ ":hash-table-test" ]
+}
+
+test("hash-table-test") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  visibility = [ ":*" ]
+  output_name = "trace-engine-hash-table-test"
+  sources = [
+    "../hash_table.h",
+    "hash_table_test.cc",
+  ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+  ]
+}

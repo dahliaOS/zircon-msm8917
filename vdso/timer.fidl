@@ -1,0 +1,19 @@
+// Copyright 2019 The Fuchsia Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+library zx;
+
+[Transport = "Syscall"]
+protocol timer {
+    /// Create a timer.
+    timer_create(uint32 options, clock clock_id) -> (status status, handle:TIMER out);
+
+    /// Start a timer.
+    /// Rights: handle must be of type ZX_OBJ_TYPE_TIMER and have ZX_RIGHT_WRITE.
+    timer_set(handle:TIMER handle, time deadline, duration slack) -> (status status);
+
+    /// Cancel a timer.
+    /// Rights: handle must be of type ZX_OBJ_TYPE_TIMER and have ZX_RIGHT_WRITE.
+    timer_cancel(handle:TIMER handle) -> (status status);
+};

@@ -1,0 +1,76 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+config("header_config") {
+  include_dirs = [ "." ]
+}
+
+source_set("private_headers") {
+  visibility = [
+    ":*",
+    "test:*",
+  ]
+  sources = [
+    "ftl.h",
+    "ftl_private.h",
+    "ftln/ftlnp.h",
+    "ndm/ndmp.h",
+    "utils/ftl_mc.h",
+    "utils/kernel.h",
+  ]
+  public_configs = [ ":header_config" ]
+}
+
+zx_library("ftl") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/ftl/ndm-driver.h",
+    "lib/ftl/volume.h",
+  ]
+  host = true
+
+  sources = [
+    "ftln/ftln_init.c",
+    "ftln/ftln_intrnl.c",
+    "ftln/ftln_rd.c",
+    "ftln/ftln_util.c",
+    "ftln/ndm-driver.cc",
+    "ftln/volume.cc",
+    "ndm/ndm_init.c",
+    "ndm/ndm_intrnl.c",
+    "ndm/ndm_vols.c",
+    "utils/aalloc.c",
+    "utils/crc32_tbl.c",
+    "utils/fsmem.c",
+    "utils/fsysinit.c",
+    "utils/ftl_mc.c",
+  ]
+
+  deps = [
+    ":private_headers",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/backtrace-request",
+  ]
+
+  if (is_fuchsia) {
+    sources += [ "utils/semaphore.cc" ]
+  } else {
+    sources += [ "utils/semaphore_posix.cc" ]
+  }
+
+  defines = [ "NDM_DEBUG" ]
+}

@@ -1,0 +1,64 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/fidl/fidl.gni")
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+group("test") {
+  testonly = true
+  deps = [ ":service-proxy-dir" ]
+}
+
+test("service-proxy-dir") {
+  output_name = "service-proxy-dir-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "service-proxy-dir.cc" ]
+  deps = [
+    ":fidl.test.echo_c",
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+    "//zircon/system/ulib/fidl-utils",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/runtests-utils",
+  ]
+}
+
+fidl("fidl.test.echo") {
+  visibility = [ ":*" ]
+  sources = [ "echo.test.fidl" ]
+}
+
+unittest_package("service-proxy-dir-package") {
+  package_name = "service-proxy-dir"
+  deps = [ ":service-proxy-dir" ]
+
+  tests = [
+    {
+      name = "service-proxy-dir-test"
+    },
+  ]
+}

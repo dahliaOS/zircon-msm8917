@@ -1,0 +1,125 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":cobalt-client-unit" ]
+}
+
+source_set("collector-test") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = true
+  if (is_fuchsia) {
+    testonly = false
+  }
+  sources = [
+    "cobalt_logger_test.cc",
+    "collector_test.cc",
+  ]
+  include_dirs = [ "../include/" ]
+  deps = [
+    "//sdk/fidl/fuchsia.cobalt:fuchsia.cobalt_llcpp",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/cobalt-client:cobalt-collector",
+    "//zircon/system/ulib/cobalt-client:in-memory-logger",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+  ]
+}
+
+source_set("metrics-test") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = true
+  if (is_fuchsia) {
+    testonly = false
+  }
+  sources = [
+    "counter_test.cc",
+    "histogram_test.cc",
+    "metric_options_test.cc",
+  ]
+  include_dirs = [ "../include/" ]
+  deps = [
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/cobalt-client:cobalt-collector",
+    "//zircon/system/ulib/cobalt-client:cobalt-metrics",
+    "//zircon/system/ulib/cobalt-client:cobalt-types-internal",
+  ]
+
+  # TODO(42493): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  configs += [ "//build/config:temporarily_disable_ubsan_do_not_use" ]
+}
+
+source_set("in-memory-logger-test") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  testonly = true
+  if (is_fuchsia) {
+    testonly = false
+  }
+  sources = [ "in_memory_logger_test.cc" ]
+  include_dirs = [ "../include/" ]
+  deps = [
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/cobalt-client:cobalt-metrics",
+    "//zircon/system/ulib/cobalt-client:in-memory-logger",
+  ]
+}
+
+test("cobalt-client-unit") {
+  output_name = "cobalt-client-unit-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = []
+  deps = [
+    ":collector-test",
+    ":in-memory-logger-test",
+    ":metrics-test",
+  ]
+
+  # TODO(46868): Fix the leaks and remove this.
+  deps += [ "//build/config/sanitizers:suppress-lsan.DO-NOT-USE-THIS" ]
+}
+
+unittest_package("cobalt-client-unit-package") {
+  package_name = "cobalt-client-unit"
+  deps = [ ":cobalt-client-unit" ]
+
+  tests = [
+    {
+      name = "cobalt-client-unit-test"
+    },
+  ]
+}

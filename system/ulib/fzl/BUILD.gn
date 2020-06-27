@@ -1,0 +1,51 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fzl") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/fzl/fifo.h",
+    "lib/fzl/memory-probe.h",
+    "lib/fzl/owned-vmo-mapper.h",
+    "lib/fzl/pinned-vmo.h",
+    "lib/fzl/resizeable-vmo-mapper.h",
+    "lib/fzl/time.h",
+    "lib/fzl/vmar-manager.h",
+    "lib/fzl/vmo-mapper.h",
+    "lib/fzl/vmo-pool.h",
+  ]
+  sources = [
+    "memory-probe.cc",
+    "owned-vmo-mapper.cc",
+    "pinned-vmo.cc",
+    "resizeable-vmo-mapper.cc",
+    "time.cc",
+    "vmar-manager.cc",
+    "vmo-mapper.cc",
+    "vmo-pool.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+  ]
+  public_deps = [
+    # Many public headers here use various fbl headers.
+    "//zircon/public/lib/fbl",
+
+    # Many public headers here use various zx headers.
+    "//zircon/public/lib/zx",
+  ]
+}

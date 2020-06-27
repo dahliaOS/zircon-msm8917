@@ -1,0 +1,64 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("devmgr-integration-test") {
+  sdk = "shared"
+  sdk_headers = [ "lib/devmgr-integration-test/fixture.h" ]
+
+  # TODO: testonly = true
+  shared = true
+  sources = [
+    "dir-watcher.cc",
+    "file-wait.cc",
+    "launcher.cc",
+  ]
+  public_deps = [
+    "//zircon/public/lib/async",
+
+    # <lib/devmgr-integration-test/fixture.h> has #include <lib/devmgr-launcher/launch.h>.
+    "//zircon/system/ulib/devmgr-launcher",
+
+    # <lib/devmgr-integration-test/fixture.h> has #include <fbl/unique_fd.h>.
+    "//zircon/public/lib/fbl",
+
+    # <lib/devmgr-integration-test/fixture.h> has #include <lib/fit/function.h>.
+    "//zircon/public/lib/fit",
+
+    # <lib/devmgr-integration-test/fixture.h> has #include <lib/zx/channel.h>.
+    "//zircon/public/lib/zx",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.boot:fuchsia.boot_c",
+    "//sdk/fidl/fuchsia.boot:fuchsia.boot_llcpp",
+    "//sdk/fidl/fuchsia.exception:fuchsia.exception_llcpp",
+    "//sdk/fidl/fuchsia.process:fuchsia.process_c",
+    "//sdk/fidl/fuchsia.scheduler:fuchsia.scheduler_c",
+    "//sdk/lib/fdio",
+    "//src/lib/ddk",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/devmgr-launcher",
+    "//zircon/system/ulib/fdio-caller",
+    "//zircon/system/ulib/fidl-async",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/fzl",
+    "//zircon/system/ulib/mock-boot-arguments",
+    "//zircon/system/ulib/syslog",
+  ]
+  configs += [ "//build/config/fuchsia:static_cpp_standard_library" ]
+}

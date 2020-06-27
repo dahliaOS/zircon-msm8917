@@ -1,0 +1,52 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("framebuffer-test") {
+  output_name = "framebuffer-test-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  deps = [
+    "//sdk/banjo/ddk.protocol.display.controller",
+    "//sdk/fidl/fuchsia.hardware.display:fuchsia.hardware.display_llcpp",
+    "//sdk/fidl/fuchsia.sysmem:fuchsia.sysmem_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+    "//zircon/system/ulib/framebuffer",
+    "//zircon/system/ulib/image-format:image-format-llcpp",
+  ]
+  sources = [ "framebuffer-test.cc" ]
+}
+
+group("test") {
+  testonly = true
+  deps = [ ":framebuffer-test" ]
+}
+
+unittest_package("framebuffer-test-package") {
+  package_name = "framebuffer-test"
+  deps = [ ":framebuffer-test" ]
+
+  tests = [
+    {
+      name = "framebuffer-test-test"
+    },
+  ]
+}

@@ -1,0 +1,194 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+config("headers_config") {
+  include_dirs = [ "." ]
+}
+
+source_set("private_headers") {
+  visibility = [ "./*" ]
+  sources = [
+    "allocator/extent-reserver.h",
+    "allocator/node-reserver.h",
+    "compression/chunked.h",
+    "compression/compressor.h",
+    "compression/decompressor.h",
+    "compression/lz4.h",
+    "compression/seekable-decompressor.h",
+    "compression/zstd-plain.h",
+    "compression/zstd-seekable.h",
+    "inspector/parser.h",
+    "iterator/allocated-extent-iterator.h",
+    "iterator/block-iterator-provider.h",
+    "iterator/block-iterator.h",
+    "iterator/extent-iterator.h",
+    "iterator/vector-extent-iterator.h",
+  ]
+  if (is_fuchsia) {
+    sources += [
+      "allocator/allocator.h",
+      "compression/blob-compressor.h",
+      "compression/zstd-compressed-block-collection.h",
+      "compression/zstd-seekable-blob-collection.h",
+      "compression/zstd-seekable-blob.h",
+      "iterator/node-populator.h",
+      "metrics.h",
+      "pager/page-watcher.h",
+      "pager/user-pager.h",
+      "read-metrics.h",
+      "verification-metrics.h",
+    ]
+  }
+  public_configs = [ ":headers_config" ]
+}
+
+zx_library("blobfs") {
+  host = true
+  sdk = "source"
+  sdk_headers = [
+    "blobfs/common.h",
+    "blobfs/host.h",
+    "blobfs/format.h",
+    "blobfs/mount.h",
+    "blobfs/host",
+    "blobfs/host/fsck.h",
+    "blobfs/node-finder.h",
+    "blobfs/fsck.h",
+    "blobfs/cache-policy.h",
+    "blobfs/mkfs.h",
+    "blobfs/blobfs_inspector.h",
+  ]
+  sources = [
+    "allocator/extent-reserver.cc",
+    "allocator/node-reserver.cc",
+    "blobfs-checker.cc",
+    "common.cc",
+    "compression-settings.cc",
+    "compression/chunked.cc",
+    "compression/decompressor.cc",
+    "compression/lz4.cc",
+    "compression/zstd-plain.cc",
+    "compression/zstd-seekable.cc",
+    "inspector/blobfs_inspector.cc",
+    "inspector/parser.cc",
+    "iterator/allocated-extent-iterator.cc",
+    "iterator/block-iterator.cc",
+    "iterator/vector-extent-iterator.cc",
+  ]
+  public_deps = [
+    "//zircon/public/lib/bitmap",
+    "//zircon/public/lib/zxc",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/fs/journal",
+    "//zircon/system/ulib/fs/transaction",
+    "//zircon/system/ulib/range",
+    "//zircon/system/ulib/storage/buffer",
+
+    # Seekable zstd include_dirs config required for all compilation units that incorporate it.
+    "//third_party/zstd:zstdseek",
+
+    # <blobfs/format.h> has #include <digest/digest.h>.
+    "//zircon/system/ulib/digest",
+  ]
+  deps = [
+    ":private_headers",
+    "//src/lib/chunked-compression",
+    "//third_party/boringssl",
+    "//third_party/zstd",
+    "//third_party/zstd:zstdseek",
+    "//zircon/public/lib/bitmap",
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+    "//zircon/public/lib/lz4",
+    "//zircon/public/lib/safemath",
+    "//zircon/public/lib/zircon-internal",
+    "//zircon/public/lib/zxc",
+    "//zircon/system/ulib/digest",
+    "//zircon/system/ulib/disk_inspector",
+    "//zircon/system/ulib/fs/journal",
+    "//zircon/system/ulib/fs/transaction",
+    "//zircon/system/ulib/fvm",
+    "//zircon/system/ulib/range",
+    "//zircon/system/ulib/storage/buffer",
+    "//zircon/system/ulib/storage/operation",
+  ]
+  if (is_fuchsia) {
+    sources += [
+      "allocator/allocator.cc",
+      "blob-cache.cc",
+      "blob-loader.cc",
+      "blob-verifier.cc",
+      "blob.cc",
+      "blobfs.cc",
+      "cache-node.cc",
+      "compression/blob-compressor.cc",
+      "compression/zstd-compressed-block-collection.cc",
+      "compression/zstd-seekable-blob-collection.cc",
+      "compression/zstd-seekable-blob.cc",
+      "directory.cc",
+      "format.cc",
+      "fsck.cc",
+      "iterator/node-populator.cc",
+      "metrics.cc",
+      "mount.cc",
+      "pager/page-watcher.cc",
+      "pager/user-pager.cc",
+      "query.cc",
+      "read-metrics.cc",
+      "runner.cc",
+      "verification-metrics.cc",
+    ]
+    public_deps += [
+      "//sdk/fidl/fuchsia.blobfs:fuchsia.blobfs_llcpp",
+      "//zircon/system/ulib/block-client",
+      "//zircon/system/ulib/fs/metrics:metrics-cobalt",
+      "//zircon/system/ulib/fs/metrics:metrics-composite-latency-event",
+      "//zircon/system/ulib/fs/metrics:metrics-inspect",
+    ]
+    deps += [
+      "//sdk/fidl/fuchsia.blobfs:fuchsia.blobfs_llcpp",
+      "//sdk/fidl/fuchsia.fs:fuchsia.fs_llcpp",
+      "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+      "//sdk/lib/fdio",
+      "//sdk/lib/sys/inspect/cpp",
+      "//zircon/public/lib/async",
+      "//zircon/public/lib/async-cpp",
+      "//zircon/public/lib/metrics",
+      "//zircon/public/lib/sync",
+      "//zircon/public/lib/zx",
+      "//zircon/system/ulib/async-default",
+      "//zircon/system/ulib/async-loop",
+      "//zircon/system/ulib/async-loop:async-loop-cpp",
+      "//zircon/system/ulib/async-loop:async-loop-default",
+      "//zircon/system/ulib/block-client",
+      "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+      "//zircon/system/ulib/fidl-utils",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/id_allocator",
+      "//zircon/system/ulib/trace",
+      "//zircon/system/ulib/trace-engine",
+      "//zircon/system/ulib/trace-provider:trace-provider-with-fdio",
+    ]
+  } else {
+    sources += [
+      "fsck-host.cc",
+      "host.cc",
+    ]
+    deps += [ "//zircon/system/ulib/fs-host" ]
+  }
+  include_dirs = [ "." ]
+}

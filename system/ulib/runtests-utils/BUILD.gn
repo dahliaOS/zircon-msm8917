@@ -1,0 +1,104 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+if (false) {  # is_gcc
+  import("//zircon/public/gn/toolchain/clang.gni")
+}
+
+zx_library("runtests-utils") {
+  testonly = true
+  host = true
+  sdk = "source"
+  sdk_headers = [
+    "runtests-utils/fuchsia-run-test.h",
+    "runtests-utils/log-exporter.h",
+    "runtests-utils/posix-run-test.h",
+    "runtests-utils/runtests-utils.h",
+    "runtests-utils/service-proxy-dir.h",
+  ]
+  sources = [
+    "discover-and-run-tests.cc",
+    "runtests-utils.cc",
+  ]
+  public_deps = [
+    # <runtests-utils/runtests-utils.h> has #include <lib/zircon-internal/fnv1hash.h>.
+    "//zircon/public/lib/zircon-internal",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zircon-internal",
+    "//zircon/system/ulib/unittest",
+  ]
+  if (is_fuchsia) {
+    sources += [
+      "fuchsia-run-test.cc",
+      "log-exporter.cc",
+      "profile.cc",
+      "service-proxy-dir.cc",
+    ]
+    public_deps += [
+      # <runtests-utils/log-exporter.h> has #include <lib/fidl/cpp/message_buffer.h>.
+      "//zircon/public/lib/fidl",
+
+      # <runtests-utils/log-exporter.h> has #include <fuchsia/logger/c/fidl.h>.
+      "//sdk/fidl/fuchsia.logger:fuchsia.logger_c",
+
+      # <runtests-utils/log-exporter.h> has #include <lib/async-loop/cpp/loop.h>.
+      "//zircon/system/ulib/async-loop:async-loop-cpp",
+    ]
+    deps += [
+      "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+      "//sdk/fidl/fuchsia.logger:fuchsia.logger_c",
+      "//sdk/lib/fdio",
+      "//zircon/public/lib/async",
+      "//zircon/public/lib/async-cpp",
+      "//zircon/public/lib/fidl",
+      "//zircon/public/lib/zx",
+      "//zircon/system/ulib/async-default",
+      "//zircon/system/ulib/async-loop",
+      "//zircon/system/ulib/async-loop:async-loop-cpp",
+      "//zircon/system/ulib/async-loop:async-loop-default",
+      "//zircon/system/ulib/debugdata",
+      "//zircon/system/ulib/fidl-async:fidl-async-cpp",
+      "//zircon/system/ulib/fs",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/loader-service",
+      "//zircon/system/ulib/unittest",
+    ]
+    if (false) {  # is_gcc
+      if (clang_tool_dir == "") {
+        clang_exec = "clang"
+      } else {
+        clang_exec = rebase_path("${clang_tool_dir}/clang")
+      }
+      resource_dir = rebase_path(exec_script("/usr/bin/env",
+                                             [
+                                               clang_exec,
+                                               "-print-resource-dir",
+                                             ],
+                                             "trim string"),
+                                 "",
+                                 root_build_dir)
+      write_file(
+          "$target_gen_dir/profile/InstrProfData.inc",
+          [ "#include \"$resource_dir/include/profile/InstrProfData.inc\"" ],
+          "list lines")
+      include_dirs = [ target_gen_dir ]
+    }
+  } else {
+    sources += [ "posix-run-test.cc" ]
+  }
+}

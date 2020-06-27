@@ -1,0 +1,12 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("$zx/public/gn/fuzzer.gni")
+
+zx_library("gfx") {
+  sdk = "source"
+  sdk_headers = [ "gfx/gfx.h" ]
+  sources = [ "gfx.c" ]
+  deps = [ "$zx/system/ulib/zircon" ]
+}

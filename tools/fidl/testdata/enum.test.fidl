@@ -1,0 +1,6 @@
+library test.name;
+
+enum MyStrictEnum : uint32 {
+    FOO = 1;
+    BAR = 2;
+};

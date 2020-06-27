@@ -1,0 +1,44 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":zx-panic-libc-test" ]
+}
+
+test("zx-panic-libc-test") {
+  output_name = "zx-panic-libc-test-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "zx-panic-libc-test.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zx-panic-libc",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+unittest_package("zx-panic-libc-test-package") {
+  package_name = "zx-panic-libc-test"
+  deps = [ ":zx-panic-libc-test" ]
+
+  tests = [
+    {
+      name = "zx-panic-libc-test-test"
+    },
+  ]
+}

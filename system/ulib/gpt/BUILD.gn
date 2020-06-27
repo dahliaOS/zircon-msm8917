@@ -1,0 +1,45 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("gpt") {
+  sdk = "source"
+  sdk_headers = [
+    "gpt/c/gpt.h",
+    "gpt/cros.h",
+    "gpt/gpt.h",
+    "gpt/guid.h",
+  ]
+  public_deps = [ "//zircon/public/lib/fbl" ]
+
+  if (is_fuchsia) {
+    sources = [
+      "cros.cc",
+      "gpt.cc",
+      "guid.cc",
+    ]
+    deps = [
+      "//sdk/fidl/fuchsia.hardware.block:fuchsia.hardware.block_c",
+      "//zircon/public/lib/cksum",
+      "//zircon/public/lib/fit",
+      "//zircon/system/ulib/mbr",
+      "//zircon/system/ulib/range",
+    ]
+  }
+
+  # TODO(41890): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  configs += [ "//build/config:temporarily_disable_ubsan_do_not_use" ]
+}

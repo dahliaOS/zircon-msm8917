@@ -1,0 +1,53 @@
+library test.fidl.unionsandwich;
+
+// These are various unions and structs-containing-unions of different sizes and alignments,
+// explicitly designed as test cases for the wire format migration where the FIDL union type is
+// changing from a static union on-the-wire (the "old" format) to an extensible union on-the-wire
+// (the "v1" format).
+//
+// See typeshape_tests.cc for furher details.
+
+union UnionSize8Alignment4 {
+    1: uint32 variant;
+};
+
+struct SandwichUnionSize8Alignment4 {
+    uint32 before;
+    UnionSize8Alignment4 union;
+    uint32 after;
+};
+
+union UnionSize12Alignment4 {
+    1: array<uint8>:6 variant;
+};
+
+struct SandwichUnionSize12Alignment4 {
+    uint32 before;
+    UnionSize12Alignment4 union;
+    int32 after;
+};
+
+struct StructSize16Alignment8 {
+    uint64 f1;
+    uint64 f2;
+};
+
+union UnionSize24Alignment8 {
+    1: StructSize16Alignment8 variant;
+};
+
+struct SandwichUnionSize24Alignment8 {
+    uint32 before;
+    UnionSize24Alignment8 union;
+    uint32 after;
+};
+
+union UnionSize36Alignment4 {
+    1: array<uint8>:32 variant;
+};
+
+struct SandwichUnionSize36Alignment4 {
+    uint32 before;
+    UnionSize36Alignment4 union;
+    uint32 after;
+};

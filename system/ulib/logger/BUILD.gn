@@ -1,0 +1,43 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("logger") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/logger/provider.h",
+    "lib/logger/logger.h",
+  ]
+  sources = [
+    "logger.cc",
+    "provider.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.logger:fuchsia.logger_c",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/syslog",
+  ]
+  public_deps = [
+    # <lib/logger/logger.h> has #include <lib/fidl/cpp/message_buffer.h>.
+    "//zircon/public/lib/fidl",
+
+    # <lib/logger/provider.h> has #include <lib/svc/service.h>.
+    "//zircon/system/ulib/svc",
+
+    # <lib/logger/logger.h> has #include <lib/async/cpp/wait.h>.
+    "//zircon/public/lib/async-cpp",
+  ]
+}

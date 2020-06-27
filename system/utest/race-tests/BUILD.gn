@@ -1,0 +1,38 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("race-tests") {
+  output_name = "race-tests-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "race-tests.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+unittest_package("race-tests-package") {
+  package_name = "race-tests"
+  deps = [ ":race-tests" ]
+
+  tests = [
+    {
+      name = "race-tests-test"
+    },
+  ]
+}

@@ -1,0 +1,33 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fs-host") {
+  sdk = "source"
+  sdk_headers = [
+    "fs-host/common.h",
+    "fs-host/json_recorder.h",
+  ]
+  host = true
+  sources = [
+    "common.cc",
+    "json_recorder.cc",
+  ]
+  public_deps = [
+    # <fs-host/json_recorder.h> has #include <lib/zircon-internal/thread_annotations.h>.
+    "//zircon/public/lib/zircon-internal",
+  ]
+  deps = [ "//zircon/public/lib/fbl" ]
+}

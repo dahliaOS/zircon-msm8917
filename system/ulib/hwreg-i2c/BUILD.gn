@@ -1,0 +1,32 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("hwreg-i2c") {
+  sdk = "source"
+  sdk_headers = [ "hwreg/i2c.h" ]
+  sources = []
+  static = true
+
+  public_deps = [
+    # <hwreg/i2c.h> has #include <lib/device-protocol/i2c.h>.
+    "//src/devices/i2c/lib/device-protocol-i2c",
+
+    # <hwreg/i2c.h> has #include <hwreg/bitfields.h>
+    "//zircon/public/lib/hwreg",
+  ]
+
+  deps = [ "//zircon/public/lib/hwreg" ]
+}

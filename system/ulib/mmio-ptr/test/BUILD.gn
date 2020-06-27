@@ -1,0 +1,43 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":mmio-ptr-unittest" ]
+}
+
+test("mmio-ptr-unittest") {
+  output_name = "mmio-ptr-unittest-test"
+  testonly = true
+  sources = [ "mmio-ptr-unittest.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//src/devices/lib/mmio",
+    "//zircon/public/lib/mmio-ptr-fake",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+unittest_package("mmio-ptr-unittest-package") {
+  package_name = "mmio-ptr-unittest"
+  deps = [ ":mmio-ptr-unittest" ]
+  tests = [
+    {
+      name = "mmio-ptr-unittest-test"
+    },
+  ]
+}

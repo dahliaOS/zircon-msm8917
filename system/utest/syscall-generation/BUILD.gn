@@ -1,0 +1,27 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+test("syscall-generation") {
+  output_name = "syscall-generation-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "syscall-generation.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+unittest_package("syscall-generation-package") {
+  package_name = "syscall-generation"
+  deps = [ ":syscall-generation" ]
+
+  tests = [
+    {
+      name = "syscall-generation-test"
+    },
+  ]
+}

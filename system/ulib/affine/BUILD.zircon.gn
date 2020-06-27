@@ -1,0 +1,27 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+zx_library("affine") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/affine/ratio.h",
+    "lib/affine/transform.h",
+    "lib/affine/assert.h",
+    "lib/affine/utils.h",
+  ]
+
+  host = true
+  kernel = true
+  static = true
+
+  sources = [
+    "ratio.cc",
+    "transform.cc",
+  ]
+
+  # TODO(41888): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  configs +=
+      [ "$zx_build/public/gn/config:temporarily_disable_ubsan_do_not_use" ]
+}

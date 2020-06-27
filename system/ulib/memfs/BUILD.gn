@@ -1,0 +1,70 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+# libmemfs-cpp.a: The C++ client library.
+#
+# Used to implement the C++ components of Memfs, which
+# can be plugged into ulib/fs.
+zx_library("memfs-cpp") {
+  sdk = "source"
+  sdk_headers = [ "lib/memfs/cpp/vnode.h" ]
+  sources = [
+    "directory.cc",
+    "dnode.cc",
+    "file.cc",
+    "memfs.cc",
+    "vmo.cc",
+  ]
+  deps = [
+    "//sdk/fidl/fuchsia.io:fuchsia.io_llcpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/fs",
+  ]
+}
+
+# libmemfs.so: The C ABI client library.
+#
+# Used to create local temporary filesystems.
+zx_library("memfs") {
+  sdk = "shared"
+  sdk_publishable = true
+  sdk_headers = [ "lib/memfs/memfs.h" ]
+  shared = true
+  sources = [ "memfs-local.cc" ]
+  public_deps = [
+    # <lib/memfs/memfs.h> has #include <lib/async/dispatcher.h>.
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/fit",
+
+    # <lib/memfs/memfs.h> has #include <lib/sync/completion.h>.
+    "//zircon/public/lib/sync",
+  ]
+  deps = [
+    ":memfs-cpp",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/fs",
+  ]
+  runtime_deps = [
+    "//sdk/lib/fdio:fdio_sdk",
+    "//zircon/system/ulib/trace-engine:trace-engine_sdk",
+  ]
+}

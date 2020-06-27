@@ -1,0 +1,51 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":pretty-test" ]
+}
+
+test("pretty-test") {
+  output_name = "pretty-test-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "test.c" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/pretty",
+    "//zircon/system/ulib/unittest",
+  ]
+}
+
+unittest_package("pretty-test-package") {
+  package_name = "pretty-test"
+  deps = [ ":pretty-test" ]
+
+  tests = [
+    {
+      name = "pretty-test-test"
+    },
+  ]
+}

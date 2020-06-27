@@ -1,0 +1,49 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("inet6") {
+  sdk = "source"
+  sdk_headers = [
+    "inet6/inet6.h",
+    "inet6/netifc.h",
+  ]
+  sources = [
+    "checksum.c",
+    "eth-client.c",
+    "inet6.c",
+    "netifc.c",
+  ]
+  deps = [
+    ":netifc-discover",
+    "//sdk/fidl/fuchsia.device:fuchsia.device_c",
+    "//sdk/fidl/fuchsia.hardware.ethernet:fuchsia.hardware.ethernet_c",
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zircon-internal",
+  ]
+  defines = [ "_ALL_SOURCE" ]
+}
+
+zx_library("netifc-discover") {
+  sdk = "source"
+  sdk_headers = [ "inet6/netifc-discover.h" ]
+  sources = [ "netifc-discover.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.device:fuchsia.device_c",
+    "//sdk/fidl/fuchsia.device:fuchsia.device_llcpp",
+    "//sdk/fidl/fuchsia.hardware.ethernet:fuchsia.hardware.ethernet_c",
+    "//sdk/lib/fdio",
+  ]
+}

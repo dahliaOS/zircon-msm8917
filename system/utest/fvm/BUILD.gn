@@ -1,0 +1,108 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+import("//src/lib/isolated_devmgr/devmgr_manifest.gni")
+
+test("fvm") {
+  output_name = "fvm-test"
+  sources = [ "fvm.cc" ]
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+
+  if (configs + fdio_config - fdio_config != configs) {
+    configs -= fdio_config
+  }
+  deps = [
+    "//sdk/fidl/fuchsia.device:fuchsia.device_c",
+    "//sdk/fidl/fuchsia.device:fuchsia.device_llcpp",
+    "//sdk/fidl/fuchsia.hardware.block.volume:fuchsia.hardware.block.volume_c",
+    "//sdk/fidl/fuchsia.io:fuchsia.io_c",
+    "//sdk/lib/fdio",
+    "//third_party/boringssl",
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/async-cpp",
+    "//zircon/public/lib/bitmap",
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/sync",
+    "//zircon/public/lib/zircon-internal",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/async-default",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/blobfs",
+    "//zircon/system/ulib/block-client",
+    "//zircon/system/ulib/devmgr-integration-test",
+    "//zircon/system/ulib/devmgr-launcher",
+    "//zircon/system/ulib/digest",
+    "//zircon/system/ulib/fdio-caller",
+    "//zircon/system/ulib/fs",
+    "//zircon/system/ulib/fs-management",
+    "//zircon/system/ulib/fvm",
+    "//zircon/system/ulib/fvm-devices",
+    "//zircon/system/ulib/fzl",
+    "//zircon/system/ulib/gpt",
+    "//zircon/system/ulib/memfs",
+    "//zircon/system/ulib/minfs",
+    "//zircon/system/ulib/ramdevice-client",
+    "//zircon/system/ulib/trace",
+    "//zircon/system/ulib/trace-engine",
+  ]
+
+  # TODO(47415): Fix the leaks and remove this.
+  deps += [ "//build/config/sanitizers:suppress-lsan.DO-NOT-USE-THIS" ]
+}
+
+test("fvm-integration") {
+  output_name = "fvm-integration-test"
+  sources = [ "resize-tests.cc" ]
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+
+  if (configs + fdio_config - fdio_config != configs) {
+    configs -= fdio_config
+  }
+
+  deps = [
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/devmgr-integration-test",
+    "//zircon/system/ulib/devmgr-launcher",
+    "//zircon/system/ulib/fvm-devices",
+  ]
+}
+
+devmgr_manifest("devmgr-manifest") {
+}
+
+test_package("fvm-tests") {
+  deps = [
+    ":devmgr-manifest",
+    ":fvm",
+    ":fvm-integration",
+  ]
+  extra = [ "$target_gen_dir/devmgr.manifest" ]
+
+  tests = [
+    {
+      name = "fvm-test"
+    },
+    {
+      name = "fvm-integration-test"
+    },
+  ]
+}

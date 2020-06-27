@@ -1,0 +1,108 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":fbl" ]
+}
+
+test("fbl") {
+  output_name = "fbl-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  include_dirs = [ "include" ]
+  sources = [
+    "algorithm_tests.cc",
+    "array_tests.cc",
+    "auto_call_tests.cc",
+    "bit_tests.cc",
+    "conditional_select_nospec_tests.cc",
+    "confine_array_index_tests.cc",
+    "forward_tests.cc",
+    "function_tests.cc",
+    "hard_int_tests.cc",
+    "inline_array_tests.cc",
+    "intrusive_container_node_tests.cc",
+    "intrusive_container_tests.cc",
+    "intrusive_doubly_linked_list_tests.cc",
+    "intrusive_hash_table_dll_tests.cc",
+    "intrusive_hash_table_sll_tests.cc",
+    "intrusive_singly_linked_list_tests.cc",
+    "intrusive_sized_doubly_linked_list_tests.cc",
+    "intrusive_sized_singly_linked_list_tests.cc",
+    "intrusive_wavl_tree_tests.cc",
+    "macro_tests.cc",
+    "recycler_tests.cc",
+    "ref_ptr_tests.cc",
+    "span_tests.cc",
+    "string_buffer_tests.cc",
+    "string_piece_tests.cc",
+    "string_printf_tests.cc",
+    "string_tests.cc",
+    "string_traits_tests.cc",
+    "type_info_tests.cc",
+    "unique_fd_tests.cc",
+    "vector_tests.cc",
+  ]
+
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zxtest",
+  ]
+
+  if (!is_fuchsia) {
+    defines = [ "FBL_TEST_ENABLE_WAVL_TREE_BALANCE_TEST=1" ]
+  }
+
+  if (is_fuchsia) {
+    # These tests won't run on the host. There are two primary reasons for this.
+    #
+    # First, Some of these tests (ref_counted_upgradeable and
+    # slab_allocator) need fbl::Mutex which currently isn't supported on
+    # the host.
+    #
+    # Second, some of these tests make use of the ASSERT_DEATH macro to
+    # ensure that certain actions result in program termination.  Again,
+    # this is not currently supported in the host test environment.
+    #
+    # See: TODO(ZX-1053)
+    sources += [
+      "alloc_checker_tests.cc",
+      "condition_variable_tests.cc",
+      "ref_counted_tests.cc",
+      "ref_counted_upgradeable_tests.cc",
+      "ring_buffer_tests.cc",
+      "slab_allocator_tests.cc",
+    ]
+    deps += [
+      "//sdk/lib/fdio",
+      "//zircon/public/lib/zx",
+    ]
+  }
+}
+
+unittest_package("fbl-package") {
+  package_name = "fbl"
+  deps = [ ":fbl" ]
+
+  tests = [
+    {
+      name = "fbl-test"
+    },
+  ]
+}

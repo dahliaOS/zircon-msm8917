@@ -1,0 +1,134 @@
+{
+  "version": "0.0.1",
+  "name": "fidl.test.json",
+  "library_dependencies": [],
+  "bits_declarations": [
+    {
+      "name": "fidl.test.json/MyBits",
+      "location": {
+        "filename": "bits.test.fidl",
+        "line": 3,
+        "column": 6,
+        "length": 6
+      },
+      "type": {
+        "kind": "primitive",
+        "subtype": "uint32"
+      },
+      "mask": "3",
+      "members": [
+        {
+          "name": "MY_FIRST_BIT",
+          "location": {
+            "filename": "bits.test.fidl",
+            "line": 4,
+            "column": 5,
+            "length": 12
+          },
+          "value": {
+            "kind": "literal",
+            "value": "1",
+            "expression": "1",
+            "literal": {
+              "kind": "numeric",
+              "value": "1",
+              "expression": "1"
+            }
+          }
+        },
+        {
+          "name": "MY_OTHER_BIT",
+          "location": {
+            "filename": "bits.test.fidl",
+            "line": 5,
+            "column": 5,
+            "length": 12
+          },
+          "value": {
+            "kind": "literal",
+            "value": "2",
+            "expression": "2",
+            "literal": {
+              "kind": "numeric",
+              "value": "2",
+              "expression": "2"
+            }
+          }
+        }
+      ],
+      "strict": true
+    },
+    {
+      "name": "fidl.test.json/StrictBits",
+      "location": {
+        "filename": "bits.test.fidl",
+        "line": 8,
+        "column": 6,
+        "length": 10
+      },
+      "type": {
+        "kind": "primitive",
+        "subtype": "uint64"
+      },
+      "mask": "9223372036854775809",
+      "members": [
+        {
+          "name": "SMALLEST",
+          "location": {
+            "filename": "bits.test.fidl",
+            "line": 9,
+            "column": 5,
+            "length": 8
+          },
+          "value": {
+            "kind": "literal",
+            "value": "1",
+            "expression": "1",
+            "literal": {
+              "kind": "numeric",
+              "value": "1",
+              "expression": "1"
+            }
+          }
+        },
+        {
+          "name": "BIGGEST",
+          "location": {
+            "filename": "bits.test.fidl",
+            "line": 10,
+            "column": 5,
+            "length": 7
+          },
+          "value": {
+            "kind": "literal",
+            "value": "9223372036854775808",
+            "expression": "0x8000000000000000",
+            "literal": {
+              "kind": "numeric",
+              "value": "9223372036854775808",
+              "expression": "0x8000000000000000"
+            }
+          }
+        }
+      ],
+      "strict": true
+    }
+  ],
+  "const_declarations": [],
+  "enum_declarations": [],
+  "experimental_resource_declarations": [],
+  "interface_declarations": [],
+  "service_declarations": [],
+  "struct_declarations": [],
+  "table_declarations": [],
+  "union_declarations": [],
+  "type_alias_declarations": [],
+  "declaration_order": [
+    "fidl.test.json/StrictBits",
+    "fidl.test.json/MyBits"
+  ],
+  "declarations": {
+    "fidl.test.json/MyBits": "bits",
+    "fidl.test.json/StrictBits": "bits"
+  }
+}

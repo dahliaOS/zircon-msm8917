@@ -1,0 +1,81 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("journal") {
+  sdk = "source"
+  sdk_headers = [
+    "fs/journal/background_executor.h",
+    "fs/journal/inspector_journal.h",
+    "fs/journal/format.h",
+    "fs/journal/initializer.h",
+    "fs/journal/header_view.h",
+    "fs/journal/data_streamer.h",
+    "fs/journal/superblock.h",
+    "fs/journal/replay.h",
+    "fs/journal/internal/inspector_parser.h",
+    "fs/journal/internal/journal_writer.h",
+    "fs/journal/internal/operation_tracker.h",
+    "fs/journal/journal.h",
+  ]
+  host = true
+  sources = [
+    "header_view.cc",
+    "initializer.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/cksum",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/fit",
+  ]
+  static = true
+
+  if (is_fuchsia) {
+    sources += [
+      "background_executor.cc",
+      "data_streamer.cc",
+      "entry_view.cc",
+      "inspector/disk_struct.cc",
+      "inspector/inspector_parser.cc",
+      "inspector_journal.cc",
+      "inspector_journal_entries.cc",
+      "journal.cc",
+      "journal_writer.cc",
+      "operation_tracker.cc",
+      "replay.cc",
+      "replay_tree.cc",
+      "superblock.cc",
+    ]
+    public_deps = [
+      "//zircon/system/ulib/disk_inspector",
+      "//zircon/system/ulib/fs",
+      "//zircon/system/ulib/fs/transaction",
+      "//zircon/system/ulib/fzl",
+      "//zircon/system/ulib/range",
+      "//zircon/system/ulib/storage/buffer",
+      "//zircon/system/ulib/storage/operation",
+    ]
+    deps += [
+      "//sdk/lib/fdio",
+      "//zircon/public/lib/fbl",
+      "//zircon/public/lib/sync",
+      "//zircon/system/ulib/disk_inspector",
+      "//zircon/system/ulib/fs/transaction",
+      "//zircon/system/ulib/range",
+      "//zircon/system/ulib/storage/buffer",
+      "//zircon/system/ulib/storage/operation",
+    ]
+  }
+}

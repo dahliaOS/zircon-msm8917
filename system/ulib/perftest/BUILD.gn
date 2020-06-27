@@ -1,0 +1,45 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("perftest") {
+  sdk = "source"
+  sdk_headers = [
+    "perftest/perftest.h",
+    "perftest/results.h",
+    "perftest/runner.h",
+  ]
+  testonly = true
+  sources = [
+    "results.cc",
+    "runner.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/system/ulib/async-loop",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/trace",
+    "//zircon/system/ulib/trace-engine",
+    "//zircon/system/ulib/trace-provider:trace-provider-with-fdio",
+  ]
+
+  # TODO(46944): UBSan has found an instance of undefined behavior in this target.
+  # Disable UBSan for this target temporarily until it is migrated into CI/CQ.
+  # Add to public_configs since the UB is found in a public header.
+  configs += [ "//build/config:temporarily_disable_ubsan_do_not_use" ]
+}

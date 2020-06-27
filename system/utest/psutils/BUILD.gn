@@ -1,0 +1,72 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("psutils") {
+  testonly = true
+  deps = [
+    ":handles",
+    ":ps",
+  ]
+}
+
+test("ps") {
+  output_name = "ps-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "ps_test.c" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//src/sys/bin/psutils:ps_internal",
+    "//zircon/public/lib/pretty",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/task-utils",
+  ]
+}
+
+test("handles") {
+  output_name = "handles-test"
+  configs += [ "//build/unification/config:zircon-migrated" ]
+  sources = [ "handles_test.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//src/sys/bin/psutils:handles_internal",
+    "//zircon/public/lib/pretty",
+    "//zircon/public/lib/zxtest",
+    "//zircon/system/ulib/task-utils",
+  ]
+}
+
+unittest_package("ps-package") {
+  package_name = "ps"
+  deps = [ ":ps" ]
+
+  tests = [
+    {
+      name = "ps-test"
+    },
+  ]
+}
+
+unittest_package("handles-package") {
+  package_name = "handles"
+  deps = [ ":handles" ]
+
+  tests = [
+    {
+      name = "handles-test"
+    },
+  ]
+}

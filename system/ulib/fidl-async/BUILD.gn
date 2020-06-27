@@ -1,0 +1,50 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36548.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/unification/zx_library.gni")
+
+zx_library("fidl-async") {
+  sdk = "source"
+  sdk_publishable = true
+  sdk_headers = [ "lib/fidl-async/bind.h" ]
+  sources = [ "bind.c" ]
+  deps = [
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/fidl",
+  ]
+}
+
+zx_library("fidl-async-cpp") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/fidl-async/cpp/bind.h",
+    "lib/fidl-async/cpp/channel_transaction.h",
+  ]
+  sources = [
+    "llcpp_bind.cc",
+    "llcpp_channel_transaction.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/async",
+    "//zircon/public/lib/fidl",
+    "//zircon/public/lib/fidl-llcpp",
+    "//zircon/public/lib/fit",
+  ]
+  public_deps = [
+    "//zircon/public/lib/fit",
+
+    # <lib/fidl-async/cpp/channel_transaction.h> has #include <lib/zx/channel.h>.
+    "//zircon/public/lib/zx",
+  ]
+}

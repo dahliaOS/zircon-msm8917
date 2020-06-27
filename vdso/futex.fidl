@@ -1,0 +1,57 @@
+// Copyright 2019 The Fuchsia Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+library zx;
+
+// TODO(scottmg): This is approximately right, but will need to match the
+// current definition of zx_futex_t (atomic_int in some #if branches).
+using Futex = int32;
+
+// TODO(scottmg): The futex is unusual in that by virtue of being an int,
+// sometimes it's passed by pointer, and sometimes by value.
+
+[Transport = "Syscall", NoProtocolPrefix]
+protocol futexfuncs {
+    /// Wait on a futex.
+    /// Rights: None.
+    [blocking]
+    futex_wait(const_futexptr value_ptr, Futex current_value, handle new_futex_owner, time deadline)
+        -> (status status);
+
+    /// Wake some number of threads waiting on a futex, and set the ownership of the futex to nothing.
+    /// Rights: None.
+    futex_wake(const_futexptr value_ptr, uint32 wake_count) -> (status status);
+
+    /// Wake some number of threads waiting on a futex, and move more waiters to another wait queue.
+    /// Rights: None.
+    futex_requeue(const_futexptr value_ptr,
+                  uint32 wake_count,
+                  Futex current_value,
+                  const_futexptr requeue_ptr,
+                  uint32 requeue_count,
+                  handle new_requeue_owner)
+        -> (status status);
+
+    /// Wake one thread waiting on a futex. If a thread is woken,
+    /// ownership of the futex is transferred to that thread. If no
+    /// thread is woken (because none are waiting), ownership of the
+    /// futex is set to none.
+    /// Rights: None.
+    futex_wake_single_owner(const_futexptr value_ptr) -> (status status);
+
+    /// Wake one thread waiting on a futex, and move more waiters to
+    /// another wait queue. Ownership is transferred to the woken thread,
+    /// or cancelled, as with |futex_wake_single_owner|.
+    /// Rights: None.
+    futex_requeue_single_owner(const_futexptr value_ptr,
+                               Futex current_value,
+                               const_futexptr requeue_ptr,
+                               uint32 requeue_count,
+                               handle new_requeue_owner)
+        -> (status status);
+
+    /// Fetch the koid current owner of a futex, if any.
+    /// Rights: None.
+    futex_get_owner(const_futexptr value_ptr) -> (status status, optional_koid koid);
+};

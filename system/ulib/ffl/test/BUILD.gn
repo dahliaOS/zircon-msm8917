@@ -1,0 +1,54 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/test/test_package.gni")
+
+group("test") {
+  testonly = true
+  deps = [ ":ffl" ]
+}
+
+test("ffl") {
+  output_name = "ffl-test"
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  if (is_fuchsia) {
+    fdio_config = [ "//build/config/fuchsia:fdio_config" ]
+    if (configs + fdio_config - fdio_config != configs) {
+      configs -= fdio_config
+    }
+  }
+  sources = [ "ffl_tests.cc" ]
+  deps = [
+    "//zircon/public/lib/ffl",
+    "//zircon/public/lib/zxtest",
+  ]
+
+  if (is_fuchsia) {
+    deps += [ "//sdk/lib/fdio" ]
+  }
+}
+
+unittest_package("ffl-package") {
+  package_name = "ffl"
+  deps = [ ":ffl" ]
+
+  tests = [
+    {
+      name = "ffl-test"
+    },
+  ]
+}

@@ -1,0 +1,278 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+##########################################
+# Though under //zircon, this build file #
+# is meant to be used in the Fuchsia GN  #
+# build.                                 #
+# See fxb/36139.                         #
+##########################################
+
+assert(!defined(zx) || zx != "/",
+       "This file can only be used in the Fuchsia GN build.")
+
+import("//build/test.gni")
+import("//build/unification/zbi/generated_resource.gni")
+import("//build/unification/zbi/resource.gni")
+
+test("runtests-utils") {
+  # Dependent manifests unfortunately cannot be marked as `testonly`.
+  # TODO(44278): Remove when converting this file to proper GN build idioms.
+  if (is_fuchsia) {
+    testonly = false
+  }
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+  sources = [
+    "fuchsia-run-test.cc",
+    "log-exporter-test.cc",
+    "runtests-utils-test-utils.cc",
+    "runtests-utils-test.cc",
+  ]
+  deps = [
+    "//zircon/public/lib/fbl",
+    "//zircon/system/ulib/async-loop:async-loop-cpp",
+    "//zircon/system/ulib/async-loop:async-loop-default",
+    "//zircon/system/ulib/memfs",
+    "//zircon/system/ulib/runtests-utils",
+    "//zircon/system/ulib/unittest",
+  ]
+  data_deps = [
+    ":packaged-profile-helper",
+    ":packaged-publish-data-helper",
+    ":packaged-raw-profile",
+    ":test-data",
+    ":test-scripts",
+  ]
+}
+
+executable("publish-data-helper") {
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  visibility = [ ":*" ]
+  sources = [ "helper/publish-data-helper.cc" ]
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+  ]
+
+  # TODO: Don't instrument the helper until we have a way to route sinks
+  # from the inner runtests instance to the outer one so they make it
+  # into summary.json.
+}
+
+executable("profile-helper") {
+  if (is_fuchsia) {
+    configs += [ "//build/unification/config:zircon-migrated" ]
+  }
+
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  visibility = [ ":*" ]
+  sources = [ "helper/profile-helper.cc" ]
+
+  deps = [
+    "//sdk/lib/fdio",
+    "//zircon/public/lib/fbl",
+    "//zircon/public/lib/zx",
+    "//zircon/public/lib/zxtest",
+  ]
+}
+
+resource("packaged-publish-data-helper") {
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  deps = [ ":publish-data-helper" ]
+  outputs =
+      [ "test/sys/runtests-utils-testdata/publish-data/publish-data-helper" ]
+  sources = [ "$root_out_dir/publish-data-helper" ]
+}
+
+resource("packaged-profile-helper") {
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  deps = [ ":profile-helper" ]
+  outputs = [ "test/sys/runtests-utils-testdata/profile/profile-helper" ]
+  sources = [ "$root_out_dir/profile-helper" ]
+}
+
+resource("packaged-raw-profile") {
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  outputs = [
+    "test/sys/runtests-utils-testdata/profile/15822697145192797690.profraw",
+  ]
+  sources = [ "helper/15822697145192797690.profraw" ]
+}
+
+generated_resource("test-data") {
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  contents = [ "Hello world!" ]
+  outputs = [ "test/sys/runtests-utils-testdata/test-data" ]
+}
+
+# Generates a build script with a sensible #! depending on what our target is.
+# We used to generate these at runtime, but that design conflicts with our
+# goals around verified execution, so now we pregenerate them and include them
+# as part of a signed package.
+template("runtests_test_script") {
+  forward_variables_from(invoker,
+                         "*",
+                         [
+                           "contents",
+                           "subdirectory",
+                         ])
+  assert(defined(invoker.contents))
+
+  if (!defined(invoker.subdirectory)) {
+    subdirectory = ""
+  } else {
+    subdirectory = "${invoker.subdirectory}/"
+  }
+
+  genfile = "$target_out_dir/test/sys/runtests-utils-testdata/${subdirectory}${target_name}"
+  rebased_genfile = rebase_path(genfile)
+
+  action("${target_name}.txt") {
+    # TODO(44278): restore to true when properly convert to GN idioms.
+    testonly = false
+    script = "/bin/bash"
+    args = [ "-c" ]
+    shebang = "#!/boot/bin/sh"
+    args += [ "printf '${shebang}\n\n${invoker.contents}\n' > $rebased_genfile && chmod a+x $rebased_genfile" ]
+    outputs = [ "$genfile" ]
+  }
+
+  resource("${target_name}") {
+    # TODO(44278): restore to true when properly convert to GN idioms.
+    testonly = false
+    deps = [ ":${target_name}.txt" ]
+    outputs =
+        [ "test/sys/runtests-utils-testdata/${subdirectory}${target_name}" ]
+    sources = [ genfile ]
+  }
+}
+
+runtests_test_script("succeed.sh") {
+  contents = "exit 0"
+}
+
+runtests_test_script("expect-this-success.sh") {
+  contents = "echo Expect this!"
+}
+
+runtests_test_script("expect-this-failure.sh") {
+  contents = "echo Expect this! 1>&2\nexit 77"
+}
+
+runtests_test_script("a.sh") {
+  contents = ""
+  subdirectory = "runtestsbasicpass"
+}
+
+runtests_test_script("b.sh") {
+  contents = ""
+  subdirectory = "runtestsbasicpass"
+}
+
+runtests_test_script("test-basic-succeed.sh") {
+  contents = "echo Success! \$@"
+  subdirectory = "runtestsbasicfail"
+}
+
+runtests_test_script("test-basic-fail.sh") {
+  contents = "echo Failure!  \$@ 1>&2\nexit 77"
+  subdirectory = "runtestsbasicfail"
+}
+
+runtests_test_script("test-globs-root.sh") {
+  contents = "echo Success! \$@"
+  subdirectory = "testglobs"
+}
+
+runtests_test_script("test-globs-one.sh") {
+  contents = "echo Success! \$@"
+  subdirectory = "testglobs/A/B/C"
+}
+
+runtests_test_script("test-globs-two.sh") {
+  contents = "echo Success! \$@"
+  subdirectory = "testglobs/A/D/C"
+}
+
+runtests_test_script("test-with-output-succeed.sh") {
+  contents = "echo Success! \$@"
+  subdirectory = "testwithoutput"
+}
+
+runtests_test_script("test-with-output-fail.sh") {
+  contents = "echo Failure!  \$@ 1>&2\nexit 77"
+  subdirectory = "testwithoutput"
+}
+
+runtests_test_script("succeed-with-echo.sh") {
+  contents = "echo Success! \$@"
+}
+
+runtests_test_script("test-root-dir.sh") {
+  # Used by RunTestRootDir.
+  contents = "read line < \$TEST_ROOT_DIR/test/sys/runtests-utils-testdata/test-data\necho \\\"\$line\\\"\n"
+}
+
+runtests_test_script("test-inf-loop.sh") {
+  # Used by RunTestTimeout
+  contents = "while true; do echo \"\"; done"
+}
+
+group("test-scripts") {
+  # TODO(44278): restore to true when properly convert to GN idioms.
+  testonly = false
+  deps = [
+    # Used by RunTestRootDir in fuchsia-run-test.cc
+    ":test-root-dir.sh",
+
+    # Used by RunTestSuccess,
+    # DiscoverAndRunTestsFailsWithNoTestGlobsOrDefaultDirs,
+    # RunTestTimeout
+    ":succeed.sh",
+
+    # Used in RunTestTimeout
+    ":test-inf-loop.sh",
+
+    # Used by RunTestSuccessWithStdout
+    ":expect-this-success.sh",
+
+    # Used by RunTestFailureWithStderr
+    ":expect-this-failure.sh",
+
+    # Used by RunTestsWithVerbosity, RunTestsWithArguments, and
+    # DiscoverAndRunTestsFallsBackToDefaultDirs
+    ":succeed-with-echo.sh",
+
+    # Used in an isolated directory by DiscoverAndRunTestsBasicPass
+    ":a.sh",
+    ":b.sh",
+
+    # Used in an isolated directory by DiscoverAndRunTestsBasicFail
+    ":test-basic-fail.sh",
+    ":test-basic-succeed.sh",
+
+    # Used in an isolated tree by DiscoverAndRunTestsWithGlobs
+    ":test-globs-one.sh",
+    ":test-globs-root.sh",
+    ":test-globs-two.sh",
+
+    # Used in an isolated directory by DiscoverAndRunTestsWithOutput and
+    # DiscoverAndRunTestsWithSyslogOutput
+    ":test-with-output-fail.sh",
+    ":test-with-output-succeed.sh",
+  ]
+}

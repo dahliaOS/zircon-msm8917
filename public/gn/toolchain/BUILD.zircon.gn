@@ -1,0 +1,104 @@
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("$zx/public/gn/config/standard.gni")
+import("breakpad.gni")
+import("clang.gni")
+import("environment.gni")
+import("toolchain.gni")
+
+assert(current_toolchain == default_toolchain,
+       "Define toolchains only in `default_toolchain` $default_toolchain")
+
+# The stub toolchain is the $default_toolchain set by //gn/BUILDCONFIG.gn.
+# It has nothing but the standard stamp and copy tools, so it can only be
+# used for action and copy rules.
+toolchain_with_tools("stub") {
+  tools = []
+
+  # This is needed for $zx/vdso et al.
+  propagates_configs = true
+}
+
+# This defines user and host toolchains.
+standard_environments("") {
+}
+
+standard_host = false
+foreach(host, standard_build_hosts) {
+  if (host.cpu == host_cpu && host.os == host_os) {
+    standard_host = true
+  }
+}
+assert(standard_host,
+       "$host_cpu-$host_os is not a standard build host for Fuchsia")
+
+group("llvm-tools") {
+  # This is here for the //:tool_paths build_api_module().
+  # So it lists tools that might be used by infra recipes and the like.
+  _llvm_tools = [
+    "clang-doc",
+    "clang-format",
+    "clang-include-fixer",
+    "clang-refactor",
+    "clang-tidy",
+    "clangd",
+    "llvm-cov",
+    "llvm-cxxfilt",
+    "llvm-dwp",
+    "llvm-objcopy",
+    "llvm-profdata",
+    "llvm-readelf",
+    "llvm-strip",
+    "llvm-symbolizer",
+    "llvm-xray",
+    "sancov",
+  ]
+  metadata = {
+    tool_paths = []
+    foreach(tool, _llvm_tools) {
+      tool_paths += [
+        {
+          cpu = host_cpu
+          label = get_label_info(":$target_name", "label_with_toolchain")
+          name = tool
+          os = host_os
+          path = rebase_path("$clang_tool_dir/$tool", root_build_dir)
+        },
+      ]
+    }
+  }
+}
+
+if (output_breakpad_syms) {
+  # Generate a target for each unique debug file provided by the toolchain.
+  # toolchain_runtime_deps() produces deps on these targets.
+
+  clang_runtime_debug = []
+  foreach(config, clang_runtime) {
+    foreach(lib, config.runtime) {
+      if (defined(lib.debug)) {
+        clang_runtime_debug += [ lib.debug ]
+        clang_runtime_debug -= [ lib.debug ]
+        clang_runtime_debug += [ lib.debug ]
+      }
+    }
+  }
+
+  assert(get_label_info(clang_runtime_breakpad_syms_label, "dir") ==
+         get_label_info(":here", "dir"))
+  breakpad_target = get_label_info(clang_runtime_breakpad_syms_label, "name")
+
+  foreach(debug, clang_runtime_debug) {
+    # This matches the transformation clang.gni does.
+    action(breakpad_target + string_join(".", string_split(debug, "/"))) {
+      sources = [ "$clang_tool_dir/../lib/$debug" ]
+      outputs = [ "$clang_runtime_breakpad_syms_dir/$debug" ]
+      inputs = [ breakpad_dump_syms ]
+      script = "$zx/public/gn/redirect-output.sh"
+      args = rebase_path(outputs + inputs, root_build_dir) + breakpad_args +
+             breakpad_fuchsia_args + rebase_path(sources, root_build_dir)
+    }
+  }
+}
