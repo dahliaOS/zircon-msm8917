@@ -20,7 +20,7 @@ static const zbi_mem_range_t mem_config[] = {
     {
         .type = ZBI_MEM_RANGE_RAM,
         .paddr = 0x80000000,
-        .length = 0x4­0­000000,  // 1 gig (for now)
+        .length = 0x40000000,  // 1 gig (for now)
     },
     {
         .type = ZBI_MEM_RANGE_PERIPHERAL,
@@ -28,9 +28,70 @@ static const zbi_mem_range_t mem_config[] = {
         .length = 0x40000000,
     },
     {
+        // sec_debug_region@0
         .type = ZBI_MEM_RANGE_RESERVED,
-        .paddr = 0x85800000,
-        .length = 0xEF00000,
+        .paddr = 0x85000000,
+        .length = 0x800000,
+    },
+    {
+        // klog_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x851ff000,
+        .length = 0x201000,
+    },
+    {
+        // ss_plog@85C00000
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x85c00000,
+        .length = 0x400000,
+    },
+    {
+        // other_ext_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x86100000,
+        .length = 0x700000,
+    },
+    {
+        // modem_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x86800000,
+        .length = 0x5a00000,
+    },
+    {
+        // adsp_fw_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x8c200000,
+        .length = 0x1800000,
+    },
+    {
+        // wcnss_fw_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x8da00000,
+        .length = 0x700000,
+    },
+    {
+        // lk_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x8f600000,
+        .length = 0x300000,
+    },
+    {
+        // venus_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x8fc00000,
+        .length = 0x400000,
+    },
+    {
+        // modem_shared_mem_region@0x93000000
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x93000000,
+        .length = 0x6000000,
+    },
+    {
+        // tzapp_region@0
+        .type = ZBI_MEM_RANGE_RESERVED,
+        .paddr = 0x95000000,
+        .length = 0x2800000,
     },
 };
 
