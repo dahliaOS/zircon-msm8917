@@ -1,0 +1,17 @@
+/dts-v1/;
+
+/ {
+    model = "Samsung J4PRIMELTE SEA OPEN PROJECT Rev02";
+    qcom,msm-id = <0x12f 0x0 0x134 0x0 0x135 0x0>;
+    qcom,pmic-id = <0x10019 0x0 0x0 0x0>;
+    qcom,board-id = <0x8 0x2>;
+
+    chosen {
+        // need a dummy bootargs for bootloader to append to
+        bootargs = "";
+    };
+
+    memory {
+        device_type = "memory";
+    };
+};
