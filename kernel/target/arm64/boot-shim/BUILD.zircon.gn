@@ -127,6 +127,7 @@ shims = [
   "hikey960",
   "cleo",
   "msm8x53-som",
+  "msm8917",
   "msm8998",
   "mt8167s_ref",
   "visalia",

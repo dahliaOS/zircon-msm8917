@@ -11,7 +11,7 @@ static const zbi_cpu_config_t cpu_config = {
     .clusters =
         {
             {
-                .cpu_count = 1,
+                .cpu_count = 4,
             }, 
         },
 };
@@ -95,6 +95,13 @@ static const zbi_mem_range_t mem_config[] = {
     },
 };
 
+static const dcfg_arm_gicv2_driver_t gicv2_driver = {
+    .mmio_phys = 0x0b000000,
+    .gicd_offset = 0x00000,
+    .gicc_offset = 0x2000,
+    .ipi_base = 5,
+};
+
 static const dcfg_arm_psci_driver_t psci_driver = {
     .use_hvc = false,
 };
@@ -106,6 +113,10 @@ static const dcfg_msm_power_driver_t power_driver = {
 };
 */
 
+static const dcfg_arm_generic_timer_driver_t timer_driver = {
+    .irq_virt = 20
+};
+
 static const zbi_platform_id_t platform_id = {
     .vid = PDEV_VID_QUALCOMM,
     .pid = PDEV_PID_QUALCOMM_MSM8917,
@@ -116,11 +127,18 @@ static void append_board_boot_item(zbi_header_t* bootdata) {
   // add CPU configuration
   append_boot_item(bootdata, ZBI_TYPE_CPU_CONFIG, 0, &cpu_config,
                    sizeof(zbi_cpu_config_t) + sizeof(zbi_cpu_cluster_t) * cpu_config.cluster_count);
-
   // add memory configuration
   append_boot_item(bootdata, ZBI_TYPE_MEM_CONFIG, 0, &mem_config,
                    sizeof(zbi_mem_range_t) * countof(mem_config));
-
+  // add interrupt controller
+  append_boot_item(bootdata, ZBI_TYPE_KERNEL_DRIVER, KDRV_ARM_GIC_V2, &gicv2_driver,
+                   sizeof(gicv2_driver));
+  // add ARM PSCI driver
+  append_boot_item(bootdata, ZBI_TYPE_KERNEL_DRIVER, KDRV_ARM_PSCI, &psci_driver,
+                   sizeof(psci_driver));
+  // add generic timer
+  append_boot_item(bootdata, ZBI_TYPE_KERNEL_DRIVER, KDRV_ARM_GENERIC_TIMER, &timer_driver,
+                   sizeof(timer_driver));				   
   // add platform ID
   append_boot_item(bootdata, ZBI_TYPE_PLATFORM_ID, 0, &platform_id, sizeof(platform_id));
 }
